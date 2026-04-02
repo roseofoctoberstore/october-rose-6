@@ -344,6 +344,31 @@ body.manager .adm-float{display:block;}
 .out-of-stock{opacity:.85;}
 .stock-btn{font-size:.85rem!important;}
 
+
+/* ── PRODUCT IMAGE GALLERY ── */
+.gallery-wrap{position:relative;height:185px;overflow:hidden;background:linear-gradient(135deg,var(--pk-pale),var(--gd-pale));}
+.gallery-main{width:100%;height:100%;object-fit:cover;transition:.4s;}
+.gallery-dots{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:2;}
+.g-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.5);cursor:pointer;transition:.2s;}
+.g-dot.ac{background:#fff;width:14px;border-radius:3px;}
+.gallery-nav{position:absolute;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.4);color:#fff;border:none;border-radius:50%;width:26px;height:26px;font-size:.75rem;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:2;transition:.2s;}
+.gallery-nav:hover{background:rgba(232,77,138,.7);}
+.gallery-nav.prev{right:6px;}.gallery-nav.next{left:6px;}
+/* Detail gallery */
+.d-gallery{position:relative;min-height:300px;overflow:hidden;}
+.d-gallery-imgs{display:flex;transition:transform .35s ease;height:100%;}
+.d-gallery-slide{min-width:100%;height:300px;object-fit:cover;}
+.d-gallery-slide.emoji-slide{display:flex;align-items:center;justify-content:center;font-size:7rem;background:linear-gradient(135deg,var(--pk-pale),var(--gd-pale));}
+.d-gallery-thumb-row{display:flex;gap:6px;padding:8px 12px;background:#f9f0f5;overflow-x:auto;scrollbar-width:none;}
+.d-gallery-thumb-row::-webkit-scrollbar{display:none;}
+.d-thumb{width:54px;height:54px;object-fit:cover;border-radius:7px;cursor:pointer;border:2px solid transparent;transition:.2s;flex-shrink:0;}
+.d-thumb.ac{border-color:var(--pk);}
+.d-thumb-emoji{width:54px;height:54px;border-radius:7px;cursor:pointer;border:2px solid var(--pk);background:linear-gradient(135deg,var(--pk-pale),var(--gd-pale));display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;}
+.add-img-btn{width:54px;height:54px;border-radius:7px;border:2px dashed var(--border);background:transparent;color:var(--muted);font-size:1.3rem;cursor:pointer;display:none;flex-shrink:0;transition:.2s;flex-direction:column;align-items:center;justify-content:center;gap:1px;}
+.add-img-btn span{font-size:.55rem;color:var(--muted);}
+.add-img-btn:hover{border-color:var(--pk);color:var(--pk);}
+body.staff-sales .add-img-btn,body.manager .add-img-btn{display:flex;}
+
 .toast{position:fixed;bottom:20px;right:22px;background:var(--dark);color:var(--gd);padding:10px 18px;border-radius:46px;font-weight:600;z-index:9000;transform:translateY(80px);opacity:0;transition:.32s;border:1px solid var(--gd);font-size:.84rem;max-width:280px;}
 .toast.show{transform:translateY(0);opacity:1;}
 
@@ -517,15 +542,9 @@ body.manager .adm-float{display:block;}
 <div class="d-ov" id="d-ov">
   <div class="d-box">
     <div class="d-top">
-      <div class="d-img-side" id="d-img-side">
-        <div class="d-emoji-big" id="d-emoji-big">🌸</div>
-        <img id="d-photo" src="" style="display:none" alt="">
-        <button class="d-close-btn" onclick="closeDetail()">✕</button>
-        <div class="img-edit-row">
-          <input type="file" id="prod-img-inp" accept="image/*" style="display:none" onchange="uploadProdImg(this)">
-          <button class="img-edit-btn" onclick="document.getElementById('prod-img-inp').click()">📷 تغيير الصورة</button>
-          <button class="img-edit-btn" id="rm-img-btn" onclick="removeProdImg()" style="display:none">🗑 إزالة</button>
-        </div>
+      <div class="d-img-side d-gallery" id="d-img-side">
+        <button class="d-close-btn" onclick="closeDetail()" style="z-index:5">✕</button>
+        <div id="d-gallery-container"></div>
       </div>
       <div class="d-info-side">
         <div>
@@ -830,9 +849,11 @@ const SB_HEADERS2 = {
 };
 
 async function apiCall(url, opts={}) {
-  let r = await fetch(url, { ...opts, headers: { ...SB_HEADERS, ...(opts.headers||{}) } });
-  if ((r.status === 401 || r.status === 403) && typeof SB_HEADERS2 !== 'undefined') {
-    r = await fetch(url, { ...opts, headers: { ...SB_HEADERS2, ...(opts.headers||{}) } });
+  // Never pass signal to avoid AbortSignal cloning issues
+  const { signal, ...safeOpts } = opts;
+  let r = await fetch(url, { ...safeOpts, headers: { ...SB_HEADERS, ...(safeOpts.headers||{}) } });
+  if (r.status === 401 || r.status === 403) {
+    r = await fetch(url, { ...safeOpts, headers: { ...SB_HEADERS2, ...(safeOpts.headers||{}) } });
   }
   return r;
 }
@@ -845,7 +866,12 @@ async function sbGet(table, query='') {
     console.error(`sbGet ${table} failed:`, r.status, err);
     throw new Error(`${r.status}: ${err}`);
   }
-  return r.json();
+  const data = await r.json();
+  // Ensure images is always array
+  if (Array.isArray(data)) {
+    data.forEach(row => { if (row.images && typeof row.images === 'string') { try { row.images = JSON.parse(row.images); } catch(e) { row.images = []; } } if (!row.images) row.images = []; });
+  }
+  return data;
 }
 async function sbPost(table, data) {
   const r = await apiCall(`${SB_URL}/rest/v1/${table}`, {
@@ -896,118 +922,60 @@ let currentUser = null; // {id, username, name, role: 'manager'|'orders'|'sales'
 // ══════════════════════════════════════
 // INIT — Load from Supabase
 // ══════════════════════════════════════
-// ══════════════════════════════════════
-// LOCAL STORAGE CACHE (works offline too)
-// ══════════════════════════════════════
-function saveLocal(key, data) {
-  try { localStorage.setItem('or6_' + key, JSON.stringify(data)); } catch(e) {}
-}
-function loadLocal(key) {
-  try { const d = localStorage.getItem('or6_' + key); return d ? JSON.parse(d) : null; } catch(e) { return null; }
-}
+// Cloud-only mode - no localStorage
+function saveLocal(key, data) { /* disabled - cloud only */ }
+function loadLocal(key) { return null; /* disabled - cloud only */ }
 
 async function init() {
-  // ══ HIDE LOADER IMMEDIATELY — no waiting ══
-  const hideLoader = () => {
-    const ls = document.getElementById('loading-screen');
-    if (!ls) return;
-    ls.style.transition = 'opacity 0.6s';
-    ls.style.opacity = '0';
-    setTimeout(() => { ls.style.display = 'none'; }, 600);
-  };
-
-  // Show site instantly
-  renderCats();
-  renderProds('all');
-  hideLoader();
-
-  // Load cached data silently
-  const cached = loadLocal('products');
-  if (cached && cached.length > 0) {
-    PRODUCTS = cached;
-    document.getElementById('stat-n').textContent = PRODUCTS.length;
+  // Show spinner until cloud data loaded
+  try {
+    await syncWithSupabase();
+  } catch(e) {
+    console.error('Init failed:', e);
+    showDbStatus('تعذّر الاتصال بالسحابة', true);
     renderCats();
     renderProds('all');
   }
-  const cachedSettings = loadLocal('settings');
-  if (cachedSettings) { SETTINGS = cachedSettings; applySettings(); }
+  hideLoader();
+}
 
-  // Sync with Supabase in background (non-blocking)
-  syncWithSupabase();
+
+function hideLoader() {
+  const ls = document.getElementById('loading-screen');
+  if (!ls) return;
+  ls.style.transition = 'opacity 0.5s';
+  ls.style.opacity = '0';
+  setTimeout(() => ls.style.display = 'none', 500);
 }
 
 async function syncWithSupabase() {
   if (window.location.protocol === 'file:') {
     showDbStatus('⚠️ افتح من استضافة وليس من جهازك', true);
+    renderCats(); renderProds('all');
     return;
   }
   try {
-    // Quick timeout test
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    
-    // Try JWT key first, then publishable key
-    let res = await fetch(
-      `${SB_URL}/rest/v1/products?order=created_at.desc`,
-      { headers: SB_HEADERS, signal: controller.signal }
-    );
-    
-    // If fails with 401, try publishable key
-    if (res.status === 401 || res.status === 403) {
-      console.log('Trying publishable key...');
-      res = await fetch(
-        `${SB_URL}/rest/v1/products?order=created_at.desc`,
-        { headers: SB_HEADERS2 }
-      );
-    }
-    clearTimeout(timeout);
-
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('Supabase:', res.status, err);
-      showDbStatus('خطأ في الاتصال ' + res.status + ' — راجع Supabase RLS', true);
-      return;
-    }
-
-    PRODUCTS = await res.json();
-    saveLocal('products', PRODUCTS);
+    PRODUCTS = await sbGet('products', 'order=created_at.desc');
     document.getElementById('stat-n').textContent = PRODUCTS.length;
     renderCats();
     renderProds(curFilter);
     showDbStatus('✓ متصل بقاعدة البيانات', false);
-
-    // Settings
     try {
-      const sRes = await fetch(`${SB_URL}/rest/v1/settings?limit=1`, { headers: SB_HEADERS });
-      if (sRes.ok) {
-        const sets = await sRes.json();
-        if (sets && sets.length > 0) {
-          SETTINGS = sets[0];
-          saveLocal('settings', SETTINGS);
-          applySettings();
-        }
-      }
+      const sets = await sbGet('settings', 'limit=1');
+      if (sets && sets.length > 0) { SETTINGS = sets[0]; applySettings(); }
     } catch(e) {}
-
-    // Order count
     try {
-      const oRes = await fetch(`${SB_URL}/rest/v1/orders?select=id`, { headers: SB_HEADERS });
-      if (oRes.ok) {
-        const ords = await oRes.json();
-        document.getElementById('stat-o').textContent = ords.length;
-      }
+      const ords = await sbGet('orders', 'select=id');
+      document.getElementById('stat-o').textContent = ords.length;
     } catch(e) {}
-
   } catch(err) {
-    if (err.name === 'AbortError') {
-      console.warn('Supabase timeout');
-      showDbStatus('انتهت مهلة الاتصال — تحقق من Supabase', true);
-    } else {
-      console.error('Sync error:', err.message);
-      showDbStatus('تعذّر الاتصال بالسحابة', true);
-    }
+    console.error('Cloud sync:', err.message);
+    showDbStatus('تعذّر الاتصال: ' + err.message, true);
+    renderCats(); renderProds('all');
+    throw err;
   }
 }
+
 
 function showDbStatus(msg, isErr) {
   const el = document.getElementById('db-status');
@@ -1130,6 +1098,179 @@ function renderCats() {
 function catName(id) { return CATS.find(c => c.id === id)?.name || id; }
 function bdgLabel(b) { return {new:'جديد',sale:'خصم',best:'الأكثر مبيعاً'}[b] || ''; }
 
+// ══════════════════════════════════════
+// IMAGE COMPRESSION
+// ══════════════════════════════════════
+function compressImage(file, maxW=800, quality=0.75) {
+  return new Promise(resolve => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ══════════════════════════════════════
+// GALLERY HELPERS
+// ══════════════════════════════════════
+function getProductImages(p) {
+  // Returns array of image data URIs
+  const imgs = [];
+  if (p.img_data) imgs.push(p.img_data);
+  if (p.images && Array.isArray(p.images)) imgs.push(...p.images.filter(i=>i && i!==p.img_data));
+  return imgs;
+}
+
+function renderCardGallery(p) {
+  const imgs = getProductImages(p);
+  if (!imgs.length) return `<div class="p-emoji">${p.emoji||'🧴'}</div>`;
+  if (imgs.length === 1) return `<img src="${imgs[0]}" alt="${p.name}" style="width:100%;height:100%;object-fit:cover">`;
+  // Multiple images - show first with dots
+  return `
+    <img src="${imgs[0]}" alt="${p.name}" class="gallery-main" id="gimg-${p.id}">
+    <div class="gallery-dots">${imgs.map((_,i)=>`<div class="g-dot ${i===0?'ac':''}" onclick="ev(event);cardGalleryGo(${p.id},${i})"></div>`).join('')}</div>
+    <button class="gallery-nav next" onclick="ev(event);cardGalleryNav(${p.id},-1)">‹</button>
+    <button class="gallery-nav prev" onclick="ev(event);cardGalleryNav(${p.id},1)">›</button>`;
+}
+
+const cardGalIdx = {};
+function cardGalleryNav(pid, dir) {
+  const p = PRODUCTS.find(x=>x.id===pid); if (!p) return;
+  const imgs = getProductImages(p);
+  cardGalIdx[pid] = ((cardGalIdx[pid]||0) + dir + imgs.length) % imgs.length;
+  cardGalleryGo(pid, cardGalIdx[pid]);
+}
+function cardGalleryGo(pid, idx) {
+  const p = PRODUCTS.find(x=>x.id===pid); if (!p) return;
+  const imgs = getProductImages(p);
+  cardGalIdx[pid] = idx;
+  const img = document.getElementById('gimg-'+pid); if (img) img.src = imgs[idx];
+  const wrap = document.getElementById('gw-'+pid);
+  if (wrap) wrap.querySelectorAll('.g-dot').forEach((d,i)=>d.classList.toggle('ac',i===idx));
+}
+
+function renderDetailGallery(p) {
+  const imgs = getProductImages(p);
+  const canEdit = currentUser && ['manager','sales'].includes(currentUser.role);
+  let html = `<div style="position:relative">`;
+  // Main image
+  if (imgs.length) {
+    html += `<img src="${imgs[0]}" id="d-main-img" alt="${p.name}" style="width:100%;height:300px;object-fit:cover">`;
+  } else {
+    html += `<div id="d-main-img" style="width:100%;height:300px;display:flex;align-items:center;justify-content:center;font-size:7rem;background:linear-gradient(135deg,var(--pk-pale),var(--gd-pale))">${p.emoji||'🌸'}</div>`;
+  }
+  html += `</div>`;
+  // Thumbnails row
+  html += `<div class="d-gallery-thumb-row" id="d-thumb-row">`;
+  if (!imgs.length) {
+    html += `<div class="d-thumb-emoji" onclick="dGallerySelect(-1)">${p.emoji||'🌸'}</div>`;
+  }
+  imgs.forEach((img,i) => {
+    html += `<img src="${img}" class="d-thumb ${i===0?'ac':''}" onclick="dGallerySelect(${i})" alt="">`;
+    if (canEdit) html += `<button onclick="removeProdImg(${i})" style="position:absolute;display:none" class="rm-thumb-${i}">x</button>`;
+  });
+  if (canEdit) {
+    html += `<input type="file" id="prod-img-inp" accept="image/*" style="display:none" multiple onchange="uploadProdImgs(this)">
+    <button class="add-img-btn" onclick="document.getElementById('prod-img-inp').click()">
+      <span style="font-size:1.2rem">📷</span><span>إضافة صورة</span>
+    </button>`;
+    if (imgs.length) {
+      html += `<button class="img-edit-btn" onclick="removeAllImgs()" style="background:rgba(231,76,60,.15);color:var(--danger);border-color:var(--danger);padding:4px 10px;border-radius:10px;font-size:.7rem;border:1.5px solid;cursor:pointer;height:54px;white-space:nowrap">🗑 كل الصور</button>`;
+    }
+  }
+  html += `</div>`;
+  return html;
+}
+
+let dGalCurIdx = 0;
+function dGallerySelect(idx) {
+  const p = PRODUCTS.find(x=>x.id===openProdId); if (!p) return;
+  const imgs = getProductImages(p);
+  dGalCurIdx = idx;
+  const mainEl = document.getElementById('d-main-img');
+  if (!mainEl) return;
+  if (idx === -1 || !imgs.length) {
+    mainEl.outerHTML = `<div id="d-main-img" style="width:100%;height:300px;display:flex;align-items:center;justify-content:center;font-size:7rem;background:linear-gradient(135deg,var(--pk-pale),var(--gd-pale))">${p.emoji||'🌸'}</div>`;
+  } else {
+    if (mainEl.tagName === 'DIV') {
+      mainEl.outerHTML = `<img src="${imgs[idx]}" id="d-main-img" alt="${p.name}" style="width:100%;height:300px;object-fit:cover">`;
+    } else {
+      mainEl.src = imgs[idx];
+    }
+  }
+  document.querySelectorAll('.d-thumb').forEach((t,i) => t.classList.toggle('ac', i===idx));
+}
+
+async function uploadProdImgs(input) {
+  const files = Array.from(input.files); if (!files.length) return;
+  const p = PRODUCTS.find(x=>x.id===openProdId); if (!p) return;
+  showDbStatus('جارٍ ضغط وحفظ الصور...', false);
+  try {
+    const compressed = await Promise.all(files.map(f => compressImage(f, 900, 0.72)));
+    if (!p.images) p.images = [];
+    // First image goes to img_data, rest to images array
+    let updates = {};
+    if (!p.img_data) {
+      p.img_data = compressed[0];
+      updates.img_data = compressed[0];
+      p.images.push(...compressed.slice(1));
+      updates.images = p.images;
+    } else {
+      p.images.push(...compressed);
+      updates.images = p.images;
+    }
+    await sbPatch('products', openProdId, updates);
+    // Refresh gallery
+    const container = document.getElementById('d-gallery-container');
+    if (container) container.innerHTML = renderDetailGallery(p);
+    renderProds(curFilter);
+    showDbStatus(`✓ تم رفع ${files.length} صورة وحفظها`, false);
+  } catch(e) { showDbStatus('⚠️ خطأ في رفع الصور: '+e.message, true); }
+  input.value = '';
+}
+
+async function removeProdImg(idx) {
+  const p = PRODUCTS.find(x=>x.id===openProdId); if (!p) return;
+  const imgs = getProductImages(p);
+  if (idx === 0) {
+    // Remove main image, promote next
+    const next = imgs[1] || null;
+    p.img_data = next;
+    p.images = (p.images||[]).filter(i=>i!==next);
+    await sbPatch('products', openProdId, { img_data: p.img_data, images: p.images });
+  } else {
+    imgs.splice(idx,1);
+    p.img_data = imgs[0]||null;
+    p.images = imgs.slice(1);
+    await sbPatch('products', openProdId, { img_data: p.img_data, images: p.images });
+  }
+  const container = document.getElementById('d-gallery-container');
+  if (container) container.innerHTML = renderDetailGallery(p);
+  renderProds(curFilter);
+  showDbStatus('✓ تم حذف الصورة', false);
+}
+
+async function removeAllImgs() {
+  if (!confirm('حذف كل الصور؟')) return;
+  const p = PRODUCTS.find(x=>x.id===openProdId); if (!p) return;
+  p.img_data = null; p.images = [];
+  await sbPatch('products', openProdId, { img_data: null, images: [] });
+  const container = document.getElementById('d-gallery-container');
+  if (container) container.innerHTML = renderDetailGallery(p);
+  renderProds(curFilter);
+  showDbStatus('✓ تم حذف كل الصور', false);
+}
+
 function renderProds(filter = 'all') {
   let list = filter === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.cat === filter);
   const q = document.getElementById('s-input').value.trim().toLowerCase();
@@ -1143,8 +1284,8 @@ function renderProds(filter = 'all') {
     <div class="prod-card ${p.in_stock===false?'out-of-stock':''}" onclick="openDetail(${p.id})">
       ${p.badge ? `<span class="p-badge bg-${p.badge}">${bdgLabel(p.badge)}</span>` : ''}
       <span class="stock-tag ${p.in_stock===false?'tag-out':'tag-in'}">${p.in_stock===false?'نفذت الكمية ❌':'متاح ✅'}</span>
-      <div class="p-img-wrap">
-        ${p.img_data ? `<img src="${p.img_data}" alt="${p.name}">` : `<div class="p-emoji">${p.emoji||'🧴'}</div>`}
+      <div class="p-img-wrap gallery-wrap" id="gw-${p.id}">
+        ${renderCardGallery(p)}
         <div class="p-hover-btns">
           <button class="p-hbtn" onclick="ev(event);addCart(${p.id})" title="أضفي للسلة" ${p.in_stock===false?'disabled style="opacity:.4;cursor:not-allowed"':''}>🛒</button>
           ${canEdit ? `<button class="p-hbtn del-btn" onclick="ev(event);delProd(${p.id})">🗑</button>` : ''}
@@ -1225,12 +1366,10 @@ function openDetail(id) {
   if (!p) return;
   openProdId = id;
 
-  // Image
-  const ph = document.getElementById('d-photo');
-  const ej = document.getElementById('d-emoji-big');
-  if (p.img_data) { ph.src = p.img_data; ph.style.display = 'block'; ej.style.display = 'none'; }
-  else { ph.style.display = 'none'; ej.style.display = 'block'; ej.textContent = p.emoji || '🌸'; }
-  document.getElementById('rm-img-btn').style.display = p.img_data ? 'flex' : 'none';
+  // Gallery
+  const container = document.getElementById('d-gallery-container');
+  if (container) container.innerHTML = renderDetailGallery(p);
+  dGalCurIdx = 0;
 
   // Cat + badge
   document.getElementById('d-cat-txt').textContent = catName(p.cat);
@@ -1298,26 +1437,8 @@ function swDTab(id, btn) {
   btn.classList.add('ac'); document.getElementById(id).classList.add('ac');
 }
 
-async function uploadProdImg(input) {
-  const f = input.files[0]; if (!f) return;
-  const r = new FileReader();
-  r.onload = async ev => {
-    try {
-      const data = ev.target.result;
-      await sbPatch('products', openProdId, { img_data: data });
-      const p = PRODUCTS.find(x => x.id === openProdId);
-      if (p) p.img_data = data;
-      document.getElementById('d-photo').src = data;
-      document.getElementById('d-photo').style.display = 'block';
-      document.getElementById('d-emoji-big').style.display = 'none';
-      document.getElementById('rm-img-btn').style.display = 'flex';
-      renderProds(curFilter);
-      toast('✦ تم رفع الصورة وحفظها');
-    } catch(e) { toast('⚠️ خطأ في رفع الصورة'); console.error(e); }
-  };
-  r.readAsDataURL(f);
-  input.value = '';
-}
+// uploadProdImg now handled by uploadProdImgs
+async function uploadProdImg(input) { await uploadProdImgs(input); }
 
 async function removeProdImg() {
   try {
@@ -1378,12 +1499,11 @@ function openAddProd() {
   newProdImgData = null;
   openMod('add-prod-modal');
 }
-function previewNpImg(input) {
+async function previewNpImg(input) {
   const f = input.files[0]; if (!f) return;
-  document.getElementById('np-img-lbl').textContent = f.name;
-  const r = new FileReader();
-  r.onload = ev => { newProdImgData = ev.target.result; };
-  r.readAsDataURL(f);
+  document.getElementById('np-img-lbl').textContent = f.name + ' (جارٍ الضغط...)';
+  newProdImgData = await compressImage(f, 900, 0.72);
+  document.getElementById('np-img-lbl').textContent = f.name + ' ✓ مضغوطة';
 }
 async function saveNewProd() {
   const name = document.getElementById('np-name').value.trim();
@@ -1395,6 +1515,7 @@ async function saveNewProd() {
     name, cat: document.getElementById('np-cat').value,
     emoji: document.getElementById('np-emoji').value || '🧴',
     in_stock: true,
+    images: [],
     img_data: newProdImgData,
     description: document.getElementById('np-description').value.trim(),
     price, old_price: parseFloat(document.getElementById('np-old').value) || null,
