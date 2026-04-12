@@ -72,19 +72,44 @@ header{background:var(--dark);padding:0 24px;height:68px;display:flex;align-item
 .cstrip-item a:hover{color:var(--pk);}
 
 /* ── HERO ── */
-.hero{background:linear-gradient(135deg,var(--blk) 0%,var(--dark) 45%,#4a0e28 75%,#6a1535 100%);min-height:70vh;display:flex;align-items:center;padding:50px 60px;position:relative;overflow:hidden;}
+.hero{background:linear-gradient(135deg,var(--blk) 0%,var(--dark) 45%,#4a0e28 75%,#6a1535 100%);min-height:70vh;display:flex;align-items:center;justify-content:space-between;padding:50px 60px;position:relative;overflow:hidden;gap:40px;}
 .hero-rings{position:absolute;inset:0;pointer-events:none;}
 .hero-rings i{position:absolute;border-radius:50%;border:1px solid rgba(232,77,138,.12);}
 .hero-rings i:nth-child(1){width:480px;height:480px;top:-90px;right:-60px;}
 .hero-rings i:nth-child(2){width:300px;height:300px;top:30px;right:90px;border-color:rgba(212,160,23,.1);}
 .hero-rings i:nth-child(3){width:160px;height:160px;top:110px;right:180px;background:radial-gradient(rgba(232,77,138,.06),transparent);}
-.hero-logo{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;min-height:400px;gap:20px;}
-.hero-logo img{max-width:280px;max-height:280px;object-fit:contain;filter:drop-shadow(0 15px 40px rgba(232,77,138,0.25));}
-.hero-logo svg{max-width:280px;max-height:280px;}
-.hero-logo-title{text-align:center;color:#fff;font-size:1.1rem;font-weight:700;font-family:'Tajawal',sans-serif;letter-spacing:1px;}
-.logo-title-brand{display:block;color:#fff;font-size:1.3rem;}
-.logo-title-sub{display:block;color:var(--gd);font-size:.8rem;letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
-.hero-content{position:relative;z-index:1;max-width:500px;}
+.hero-content{position:relative;z-index:1;max-width:520px;order:2;}
+
+/* ══ LOGO SCENE ══ */
+.hero-logo{flex-shrink:0;width:320px;height:400px;display:flex;flex-direction:column;align-items:center;justify-content:center;order:1;position:relative;z-index:1;}
+.logo-ring-1{position:absolute;width:296px;height:296px;border-radius:50%;border:2px solid transparent;background:linear-gradient(var(--dark),var(--dark)) padding-box,conic-gradient(var(--pk),var(--gd),transparent,var(--pk)) border-box;animation:lSpin 7s linear infinite;}
+.logo-ring-2{position:absolute;width:258px;height:258px;border-radius:50%;border:1.5px solid rgba(232,77,138,.3);animation:lPulse 3s ease-in-out infinite;}
+.logo-glow{position:absolute;width:224px;height:224px;border-radius:50%;background:radial-gradient(circle,rgba(232,77,138,.2),rgba(212,160,23,.08),transparent 68%);animation:lGlow 4s ease-in-out infinite;}
+.logo-orbit{position:absolute;width:296px;height:296px;border-radius:50%;animation:lSpin 10s linear infinite reverse;}
+.logo-orbit span{position:absolute;font-size:1.25rem;animation:lCounter 10s linear infinite;filter:drop-shadow(0 2px 5px rgba(232,77,138,.6));}
+.logo-orbit span:nth-child(1){top:-14px;left:50%;transform:translateX(-50%);}
+.logo-orbit span:nth-child(2){top:13%;right:-12px;}
+.logo-orbit span:nth-child(3){bottom:13%;right:-12px;}
+.logo-orbit span:nth-child(4){bottom:-14px;left:50%;transform:translateX(-50%);}
+.logo-orbit span:nth-child(5){bottom:13%;left:-12px;}
+.logo-orbit span:nth-child(6){top:13%;left:-12px;}
+.logo-circle-img{position:relative;width:200px;height:200px;border-radius:50%;overflow:hidden;border:3px solid rgba(212,160,23,.6);box-shadow:0 0 28px rgba(232,77,138,.45),0 0 60px rgba(232,77,138,.15);background:radial-gradient(circle,#2a0e1a,#0d0608);animation:lFloat 5s ease-in-out infinite;z-index:2;flex-shrink:0;}
+.logo-circle-img img{width:100%;height:100%;object-fit:cover;border-radius:50%;}
+.logo-circle-img .logo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:4.5rem;}
+.logo-spark{position:absolute;border-radius:50%;animation:lSpark ease-in-out infinite;}
+.logo-spark:nth-child(1){width:6px;height:6px;background:var(--gd);top:9%;right:28%;animation-duration:2.2s;animation-delay:0s;}
+.logo-spark:nth-child(2){width:4px;height:4px;background:var(--pk);top:78%;right:14%;animation-duration:2.8s;animation-delay:.7s;}
+.logo-spark:nth-child(3){width:5px;height:5px;background:#fff;top:18%;left:16%;animation-duration:2s;animation-delay:1.4s;}
+.logo-spark:nth-child(4){width:4px;height:4px;background:var(--pk-light);top:76%;left:26%;animation-duration:3s;animation-delay:.3s;}
+.hero-logo-title{margin-top:20px;text-align:center;position:relative;z-index:3;}
+.logo-title-brand{display:block;color:#fff;font-size:1.6rem;font-weight:800;font-family:'Playfair Display',serif;letter-spacing:1px;text-shadow:0 2px 14px rgba(232,77,138,.45);}
+.logo-title-sub{display:block;color:var(--gd);font-size:.82rem;letter-spacing:3px;text-transform:uppercase;margin-top:5px;font-family:'Tajawal',sans-serif;}
+@keyframes lSpin{to{transform:rotate(360deg)}}
+@keyframes lCounter{to{transform:rotate(-360deg)}}
+@keyframes lPulse{0%,100%{transform:scale(1);opacity:.3}50%{transform:scale(1.05);opacity:.8}}
+@keyframes lGlow{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.12);opacity:1}}
+@keyframes lFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+@keyframes lSpark{0%,100%{transform:scale(0);opacity:0}50%{transform:scale(1.8);opacity:1}}
 .hero-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(232,77,138,.15);border:1px solid rgba(232,77,138,.35);color:var(--pk-light);padding:5px 15px;border-radius:30px;font-size:.77rem;letter-spacing:1.5px;margin-bottom:20px;}
 .hero h1{font-family:'Playfair Display',serif;color:#fff;font-size:clamp(1.8rem,4vw,3.2rem);line-height:1.22;margin-bottom:15px;}
 .hero h1 .c-pk{color:var(--pk);}
@@ -556,13 +581,31 @@ body.manager .adm-float{display:block;}
 <!-- HERO -->
 <section class="hero">
   <div class="hero-rings"><i></i><i></i><i></i></div>
+
+  <!-- LOGO SCENE — يمين -->
   <div class="hero-logo">
-    <img id="hero-logo-img" src="" alt="Company Logo" style="display:none;">
+    <div class="logo-ring-1"></div>
+    <div class="logo-ring-2"></div>
+    <div class="logo-glow"></div>
+    <div class="logo-orbit">
+      <span>💄</span><span>✨</span><span>🌸</span>
+      <span>💋</span><span>🧴</span><span>💅</span>
+    </div>
+    <div class="logo-spark"></div>
+    <div class="logo-spark"></div>
+    <div class="logo-spark"></div>
+    <div class="logo-spark"></div>
+    <div class="logo-circle-img">
+      <img id="hero-logo-img" src="" alt="Logo" style="display:none;">
+      <div id="hero-logo-placeholder" class="logo-ph">🌸</div>
+    </div>
     <div class="hero-logo-title">
       <span class="logo-title-brand" id="logo-title-brand">October Rose 6</span>
       <span class="logo-title-sub" id="logo-title-sub">Make Up & Cosmetics</span>
     </div>
   </div>
+
+  <!-- محتوى — يسار -->
   <div class="hero-content">
     <div class="hero-pill">✦ جمالك يستحق الأفضل ✦</div>
     <h1>عالم <span class="c-pk">الجمال</span><br>في متناول <span class="c-gd">يديكِ</span></h1>
@@ -1208,37 +1251,58 @@ function showDbStatus(msg, isErr) {
 function applySettings() {
   if (!SETTINGS) return;
   const s = SETTINGS;
-  
-  // Apply logo to hero section if available
+
+  // ══ اللوجو — يتحمل في كل الأماكن ══
   if (s.logo_url) {
-    const logoImg = document.getElementById('hero-logo-img');
-    if (logoImg) {
-      logoImg.src = s.logo_url;
-      logoImg.style.display = 'block';
-    }
+    // header
+    const hdrLogo = document.getElementById('logo-img');
+    if (hdrLogo) hdrLogo.src = s.logo_url;
+    // loading screen
+    const lsLogo = document.getElementById('ls-logo');
+    if (lsLogo) lsLogo.src = s.logo_url;
+    // hero
+    const heroImg = document.getElementById('hero-logo-img');
+    const heroPh  = document.getElementById('hero-logo-placeholder');
+    if (heroImg) { heroImg.src = s.logo_url; heroImg.style.display = 'block'; }
+    if (heroPh)  heroPh.style.display = 'none';
   }
-  
-  // Apply logo title from settings
+
+  // ══ اسم المتجر ══
   if (s.brand_name) {
-    const titleBrand = document.getElementById('logo-title-brand');
-    if (titleBrand) titleBrand.textContent = s.brand_name;
+    const brandEl = document.querySelector('.brand-name');
+    if (brandEl) brandEl.textContent = s.brand_name;
+    document.title = s.brand_name + ' – Make Up & Cosmetics';
+    const tb = document.getElementById('logo-title-brand');
+    if (tb) tb.textContent = s.brand_name;
+    // footer
+    const footBrand = document.querySelector('footer span');
+    if (footBrand) footBrand.textContent = s.brand_name;
   }
   if (s.brand_subtitle) {
-    const titleSub = document.getElementById('logo-title-sub');
-    if (titleSub) titleSub.textContent = s.brand_subtitle;
+    const ts = document.getElementById('logo-title-sub');
+    if (ts) ts.textContent = s.brand_subtitle;
+    const brandSub = document.querySelector('.brand-sub');
+    if (brandSub) brandSub.textContent = s.brand_subtitle;
   }
-  
-  if (s.phone) { setContactText('cs-phone','cc-phone', s.phone, 'tel:'+s.phone); }
+
+  // ══ بيانات التواصل ══
+  if (s.phone) {
+    setContactText('cs-phone','cc-phone', s.phone, 'tel:'+s.phone.replace(/\s/g,''));
+  }
   if (s.whatsapp) {
     const wn = s.whatsapp.replace(/\D/g,'');
-    document.getElementById('cs-wa').textContent = 'واتساب: ' + s.whatsapp;
-    document.getElementById('cs-wa').href = 'https://wa.me/'+wn;
-    document.getElementById('cc-wa').textContent = s.whatsapp;
-    document.getElementById('cc-wa').href = 'https://wa.me/'+wn;
+    ['cs-wa','cc-wa'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) { el.textContent = (id==='cs-wa'?'واتساب: ':'')+s.whatsapp; el.href='https://wa.me/'+wn; }
+    });
   }
-  if (s.email) { setContactText('cs-email','cc-email', s.email, 'mailto:'+s.email); }
-  if (s.address) document.getElementById('cc-addr').textContent = s.address;
-  if (s.brand_name) { document.querySelector('.brand-name').textContent = s.brand_name; document.title = s.brand_name + ' – Make Up & Cosmetics'; }
+  if (s.email) {
+    setContactText('cs-email','cc-email', s.email, 'mailto:'+s.email);
+  }
+  if (s.address) {
+    const addrEl = document.getElementById('cc-addr');
+    if (addrEl) addrEl.textContent = s.address;
+  }
 }
 function setContactText(id1,id2,txt,href) {
   [id1,id2].forEach(id => { const el=document.getElementById(id); if(el){el.textContent=txt;el.href=href;} });
@@ -2138,9 +2202,9 @@ function swSetTab(id, btn) {
 }
 async function saveSettings() {
   const phone = document.getElementById('s-phone').value.trim();
-  const wa = document.getElementById('s-wa').value.trim();
+  const wa    = document.getElementById('s-wa').value.trim();
   const email = document.getElementById('s-email').value.trim();
-  const addr = document.getElementById('s-addr').value.trim();
+  const addr  = document.getElementById('s-addr').value.trim();
   const brand = document.getElementById('s-brand').value.trim();
   const op = document.getElementById('s-old-p').value;
   const np = document.getElementById('s-new-p').value;
@@ -2148,10 +2212,12 @@ async function saveSettings() {
 
   const updates = {};
   if (phone) updates.phone = phone;
-  if (wa) updates.whatsapp = wa;
+  if (wa)    updates.whatsapp = wa;
   if (email) updates.email = email;
-  if (addr) updates.address = addr;
+  if (addr)  updates.address = addr;
   if (brand) updates.brand_name = brand;
+  // احتفظ بالـ logo_url الموجودة
+  if (SETTINGS.logo_url) updates.logo_url = SETTINGS.logo_url;
 
   if (op) {
     if (op !== SETTINGS.manager_password) { toast('⚠️ كلمة المرور الحالية خاطئة'); return; }
@@ -2163,21 +2229,50 @@ async function saveSettings() {
 
   try {
     if (SETTINGS.id) {
-      const res = await sbPatch('settings', SETTINGS.id, updates);
+      await sbPatch('settings', SETTINGS.id, updates);
       SETTINGS = { ...SETTINGS, ...updates };
     } else {
       const res = await sbPost('settings', { ...updates, manager_username: 'manager', manager_password: '9090' });
       SETTINGS = res[0];
     }
+    saveLocal('settings', SETTINGS);
     applySettings();
     closeMod('set-modal');
-    toast('✦ تم حفظ الإعدادات في قاعدة البيانات');
+    toast('✦ تم حفظ الإعدادات على السحابة ✓');
   } catch(e) { toast('⚠️ خطأ في الحفظ'); console.error(e); }
 }
-function handleLogoUpload(input) {
+
+async function handleLogoUpload(input) {
   const f = input.files[0]; if (!f) return;
+  toast('⏳ جارٍ رفع اللوجو على السحابة...');
   const r = new FileReader();
-  r.onload = ev => { document.getElementById('logo-img').src = ev.target.result; document.getElementById('ls-logo').src = ev.target.result; toast('✦ تم تحديث اللوجو'); };
+  r.onload = async ev => {
+    const d = ev.target.result;
+    // تحديث فوري لكل العناصر
+    const hdrLogo = document.getElementById('logo-img');
+    const lsLogo  = document.getElementById('ls-logo');
+    const heroImg  = document.getElementById('hero-logo-img');
+    const heroPh   = document.getElementById('hero-logo-placeholder');
+    if (hdrLogo) hdrLogo.src = d;
+    if (lsLogo)  lsLogo.src  = d;
+    if (heroImg) { heroImg.src = d; heroImg.style.display = 'block'; }
+    if (heroPh)  heroPh.style.display = 'none';
+    // حفظ على Supabase
+    try {
+      if (SETTINGS.id) {
+        await sbPatch('settings', SETTINGS.id, { logo_url: d });
+        SETTINGS.logo_url = d;
+        saveLocal('settings', SETTINGS);
+        toast('✦ تم رفع اللوجو وحفظه على السحابة ✓');
+      } else {
+        // إنشاء سجل الإعدادات لو مش موجود
+        const res = await sbPost('settings', { logo_url: d, manager_username: 'manager', manager_password: '9090' });
+        SETTINGS = res[0];
+        saveLocal('settings', SETTINGS);
+        toast('✦ تم رفع اللوجو وحفظه على السحابة ✓');
+      }
+    } catch(e) { toast('⚠️ خطأ في رفع اللوجو: ' + e.message); console.error(e); }
+  };
   r.readAsDataURL(f);
 }
 
