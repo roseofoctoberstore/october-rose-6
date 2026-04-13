@@ -1009,17 +1009,22 @@ body.manager .adm-float{display:block;}
       <div class="f-row"><label>الإيموجي</label><input id="np-emoji" placeholder="💄" maxlength="4"></div>
     </div>
     <div class="f-row">
-      <label>صورة المنتج (اختياري)</label>
-      <input type="file" id="np-img" accept="image/*" style="display:none" onchange="previewNpImg(this)">
-      <div style="display:flex;gap:8px;align-items:center">
-        <button type="button" class="m-save" style="padding:7px 14px;font-size:.8rem" onclick="document.getElementById('np-img').click()">📷 اختر صورة</button>
+      <label>صور المنتج (اختياري — يمكن اختيار أكثر من صورة)</label>
+      <input type="file" id="np-img" accept="image/*" multiple style="display:none" onchange="previewNpImgs(this)">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <button type="button" class="m-save" style="padding:7px 14px;font-size:.8rem" onclick="document.getElementById('np-img').click()">📷 اختر صور</button>
         <span id="np-img-lbl" style="font-size:.76rem;color:var(--muted)">لم يتم اختيار صورة</span>
       </div>
+      <div id="np-img-preview" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
     </div>
     <div class="f-row"><label>الوصف</label><textarea id="np-description" placeholder="وصف مختصر"></textarea></div>
     <div class="f-grid">
       <div class="f-row"><label>السعر (ج.م) *</label><input id="np-price" type="number" placeholder="150"></div>
       <div class="f-row"><label>السعر القديم</label><input id="np-old" type="number" placeholder="200"></div>
+    </div>
+    <div class="f-row" id="np-cost-row" style="display:none">
+      <label>سعر الشراء (داخلي — للمدير فقط)</label>
+      <input id="np-cost" type="number" placeholder="0">
     </div>
     <div class="f-row"><label>الشارة</label>
       <select id="np-badge"><option value="">بدون</option><option value="new">جديد ✨</option><option value="sale">خصم 🏷</option><option value="best">الأكثر مبيعاً ⭐</option></select>
@@ -1255,7 +1260,7 @@ let SETTINGS = {};
 let cart = [];
 let curFilter = 'all';
 let openProdId = null;
-let newProdImgData = null;
+let newProdImgs = [];
 
 // Current logged-in staff
 let currentUser = null; // {id, username, name, role: 'manager'|'orders'|'sales'}
@@ -2020,19 +2025,33 @@ async function saveDetail() {
 // ══════════════════════════════════════
 function openAddProd() {
   if (!currentUser || !['manager','sales'].includes(currentUser.role)) return;
-  ['np-name','np-emoji','np-description','np-price','np-old','np-usage','np-ingr','np-tips','np-info'].forEach(id => document.getElementById(id).value = '');
+  ['np-name','np-emoji','np-description','np-price','np-old','np-cost','np-usage','np-ingr','np-tips','np-info'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   document.getElementById('np-badge').value = '';
   document.getElementById('np-cat').value = 'hair';
   document.getElementById('np-img-lbl').textContent = 'لم يتم اختيار صورة';
-  newProdImgData = null;
+  document.getElementById('np-img-preview').innerHTML = '';
+  newProdImgs = [];
+  // إظهار سعر الشراء للمدير فقط
+  document.getElementById('np-cost-row').style.display = currentUser.role === 'manager' ? 'block' : 'none';
   openMod('add-prod-modal');
 }
-function previewNpImg(input) {
-  const f = input.files[0]; if (!f) return;
-  document.getElementById('np-img-lbl').textContent = f.name;
-  const r = new FileReader();
-  r.onload = ev => { newProdImgData = ev.target.result; };
-  r.readAsDataURL(f);
+function previewNpImgs(input) {
+  const files = Array.from(input.files); if (!files.length) return;
+  document.getElementById('np-img-lbl').textContent = files.length + ' صورة مختارة';
+  const preview = document.getElementById('np-img-preview');
+  preview.innerHTML = '';
+  newProdImgs = [];
+  files.forEach((f, i) => {
+    const r = new FileReader();
+    r.onload = ev => {
+      newProdImgs[i] = ev.target.result;
+      const img = document.createElement('img');
+      img.src = ev.target.result;
+      img.style.cssText = 'width:54px;height:54px;object-fit:cover;border-radius:8px;border:2px solid var(--border)';
+      preview.appendChild(img);
+    };
+    r.readAsDataURL(f);
+  });
 }
 async function saveNewProd() {
   const name = document.getElementById('np-name').value.trim();
@@ -2040,13 +2059,17 @@ async function saveNewProd() {
   if (!name || !price) { toast('⚠️ أدخل الاسم والسعر'); return; }
   const usage = document.getElementById('np-usage').value.split('\n').filter(x=>x.trim());
   const ingr = document.getElementById('np-ingr').value.split('\n').filter(x=>x.trim());
+  const imgs = newProdImgs.filter(Boolean);
+  const costEl = document.getElementById('np-cost');
   const prod = {
     name, cat: document.getElementById('np-cat').value,
     emoji: document.getElementById('np-emoji').value || '🧴',
     in_stock: true,
-    img_data: newProdImgData,
+    img_data: imgs[0] || null,
+    images: imgs,
     description: document.getElementById('np-description').value.trim(),
     price, old_price: parseFloat(document.getElementById('np-old').value) || null,
+    cost: (costEl && costEl.value) ? parseFloat(costEl.value) : null,
     badge: document.getElementById('np-badge').value,
     usage, ingredients: ingr,
     tips: document.getElementById('np-tips').value.trim(),
@@ -2453,14 +2476,19 @@ async function doCustRegister() {
   if (pass.length < 6) { toast('⚠️ كلمة المرور 6 أحرف على الأقل'); return; }
   try {
     const res = await sbPost('customers', { name, email, password: pass, phone });
+    if (!res || !res[0]) throw new Error('لم يتم إرجاع بيانات من السيرفر');
     currentCustomer = res[0];
     closeMod('cust-login-modal');
     document.getElementById('cust-btn-lbl').textContent = name;
     toast(`✦ تم إنشاء حسابك بنجاح 🌸`);
     showCustOrders();
   } catch(e) {
-    if (e.message && e.message.includes('unique')) toast('⚠️ هذا الإيميل مسجّل بالفعل');
-    else toast('⚠️ خطأ في إنشاء الحساب'); console.error(e);
+    console.error('Register error:', e);
+    const msg = e.message || '';
+    if (msg.includes('unique') || msg.includes('duplicate')) toast('⚠️ هذا الإيميل مسجّل بالفعل');
+    else if (msg.includes('customers') || msg.includes('relation') || msg.includes('does not exist')) toast('⚠️ جدول العملاء غير موجود — تأكد من إعداد قاعدة البيانات');
+    else if (msg.includes('permission') || msg.includes('policy') || msg.includes('RLS')) toast('⚠️ خطأ في صلاحيات قاعدة البيانات');
+    else toast('⚠️ خطأ في إنشاء الحساب: ' + msg.slice(0, 80));
   }
 }
 
