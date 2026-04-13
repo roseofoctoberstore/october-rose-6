@@ -800,6 +800,12 @@ body.manager .adm-float{display:block;}
         <div style="margin-top:6px">
           <input class="e-inp" id="d-deposit-edit" type="number" placeholder="قيمة العربون / الديبوزيت (0 = لا يوجد)">
         </div>
+        <div style="margin-top:8px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;color:var(--muted)">
+            <input type="checkbox" id="d-price-tbd" onchange="toggleDPriceTbd(this)" style="width:15px;height:15px;accent-color:var(--pk)">
+            سعر غير محدد (اتصلي للسعر)
+          </label>
+        </div>
       </div>
 
       <!-- Description -->
@@ -1009,22 +1015,23 @@ body.manager .adm-float{display:block;}
       <div class="f-row"><label>الإيموجي</label><input id="np-emoji" placeholder="💄" maxlength="4"></div>
     </div>
     <div class="f-row">
-      <label>صور المنتج (اختياري — يمكن اختيار أكثر من صورة)</label>
-      <input type="file" id="np-img" accept="image/*" multiple style="display:none" onchange="previewNpImgs(this)">
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <button type="button" class="m-save" style="padding:7px 14px;font-size:.8rem" onclick="document.getElementById('np-img').click()">📷 اختر صور</button>
+      <label>صورة المنتج (اختياري)</label>
+      <input type="file" id="np-img" accept="image/*" style="display:none" onchange="previewNpImg(this)">
+      <div style="display:flex;gap:8px;align-items:center">
+        <button type="button" class="m-save" style="padding:7px 14px;font-size:.8rem" onclick="document.getElementById('np-img').click()">📷 اختر صورة</button>
         <span id="np-img-lbl" style="font-size:.76rem;color:var(--muted)">لم يتم اختيار صورة</span>
       </div>
-      <div id="np-img-preview" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
     </div>
     <div class="f-row"><label>الوصف</label><textarea id="np-description" placeholder="وصف مختصر"></textarea></div>
     <div class="f-grid">
-      <div class="f-row"><label>السعر (ج.م) *</label><input id="np-price" type="number" placeholder="150"></div>
+      <div class="f-row"><label>السعر (ج.م)</label><input id="np-price" type="number" placeholder="150"></div>
       <div class="f-row"><label>السعر القديم</label><input id="np-old" type="number" placeholder="200"></div>
     </div>
-    <div class="f-row" id="np-cost-row" style="display:none">
-      <label>سعر الشراء (داخلي — للمدير فقط)</label>
-      <input id="np-cost" type="number" placeholder="0">
+    <div class="f-row" style="margin-top:-4px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;color:var(--muted)">
+        <input type="checkbox" id="np-price-tbd" onchange="toggleNpPriceTbd(this)" style="width:16px;height:16px;accent-color:var(--pk)">
+        سعر غير محدد (يظهر للعميل "اتصلي للسعر")
+      </label>
     </div>
     <div class="f-row"><label>الشارة</label>
       <select id="np-badge"><option value="">بدون</option><option value="new">جديد ✨</option><option value="sale">خصم 🏷</option><option value="best">الأكثر مبيعاً ⭐</option></select>
@@ -1260,7 +1267,7 @@ let SETTINGS = {};
 let cart = [];
 let curFilter = 'all';
 let openProdId = null;
-let newProdImgs = [];
+let newProdImgData = null;
 
 // Current logged-in staff
 let currentUser = null; // {id, username, name, role: 'manager'|'orders'|'sales'}
@@ -1308,7 +1315,7 @@ async function init() {
 
   // ② Sync with Supabase
   try {
-    PRODUCTS = await sbGet('products', 'order=created_at.desc');
+    PRODUCTS = await sbGet('products', 'order=created_at.desc&select=id,name,cat,emoji,price,old_price,price_tbd,badge,in_stock,description,deposit,cost,usage,ingredients,tips,info,img_data,created_at');
     saveLocal('products', PRODUCTS);
     document.getElementById('stat-n').textContent = PRODUCTS.length;
     renderCats();
@@ -1510,7 +1517,7 @@ function renderProds(filter = 'all') {
         <div class="p-foot">
           <div class="p-price">
             ${p.old_price ? `<span class="p-old">${p.old_price} ج.م</span>` : ''}
-            ${p.price} ج.م
+            ${p.price_tbd ? `<span style="color:var(--pk);font-size:.82rem;font-weight:700">📞 اتصلي للسعر</span>` : `${p.price||''} ج.م`}
           </div>
           <button class="p-add" onclick="ev(event);addCart(${p.id})" ${p.in_stock===false?'disabled style="opacity:.4;background:#ccc;cursor:not-allowed"':''}>
             ${p.in_stock===false?'نفذت الكمية':'+ السلة'}
@@ -1689,12 +1696,30 @@ function openDetail(id) {
   // ── Helpers for parsing cloud data ──
   const toArr = v => Array.isArray(v) ? v : (typeof v==='string' && v ? v.split('\n').filter(x=>x.trim()) : []);
 
-  // ── Gallery ──
+  // ── Gallery — lazy load للصور الإضافية ──
   document.getElementById('d-emoji-big').textContent = p.emoji || '🌸';
-  const imgs = toArr(p.images);
-  galImgs = imgs.length ? [...imgs] : (p.img_data ? [p.img_data] : []);
+  // img_data موجود من أول تحميل — نعرضه فوراً
+  galImgs = p.img_data ? [p.img_data] : [];
   galIdx = 0;
   galRender();
+  // نجيب الصور الإضافية (images[]) lazy لأنها مش في التحميل الأول
+  if (!p._imagesLoaded) {
+    sbGet('products', `id=eq.${id}&select=images`).then(rows => {
+      if (!rows || !rows[0]) return;
+      p._imagesLoaded = true;
+      const extraImgs = rows[0].images || [];
+      if (extraImgs.length > 0) {
+        // ندمج img_data مع الصور الإضافية بدون تكرار
+        const all = [p.img_data, ...extraImgs.filter(x => x !== p.img_data)].filter(Boolean);
+        p.images = all;
+        galImgs = all;
+        galRender();
+      }
+    }).catch(() => {});
+  } else if (p.images && p.images.length) {
+    galImgs = [...p.images];
+    galRender();
+  }
 
   // ── Category & badge ──
   document.getElementById('d-cat-txt').textContent = catName(p.cat);
@@ -1709,7 +1734,9 @@ function openDetail(id) {
   document.getElementById('d-name-edit').value = p.name || '';
 
   // ── Price + old price ──
-  document.getElementById('d-price-view').textContent = (p.price || 0) + ' ج.م';
+  const priceViewEl = document.getElementById('d-price-view');
+  if (p.price_tbd) { priceViewEl.innerHTML = '<span style="color:var(--pk);font-size:1.1rem">📞 اتصلي للسعر</span>'; }
+  else { priceViewEl.textContent = (p.price || 0) + ' ج.م'; }
   const odEl = document.getElementById('d-old-view');
   if (p.old_price && parseFloat(p.old_price) > 0) {
     odEl.textContent = p.old_price + ' ج.م';
@@ -1717,6 +1744,8 @@ function openDetail(id) {
   } else odEl.style.display = 'none';
   document.getElementById('d-price-edit').value = p.price || '';
   document.getElementById('d-old-edit').value = p.old_price || '';
+  const tbdChk = document.getElementById('d-price-tbd');
+  if (tbdChk) { tbdChk.checked = !!p.price_tbd; document.getElementById('d-price-edit').disabled=!!p.price_tbd; document.getElementById('d-old-edit').disabled=!!p.price_tbd; }
 
   // ── Deposit ──
   const dep = parseFloat(p.deposit) || 0;
@@ -1998,7 +2027,8 @@ async function saveDetail() {
   const updates = {
     name:        document.getElementById('d-name-edit').value.trim(),
     cat:         document.getElementById('d-cat-edit').value,
-    price:       parseFloat(document.getElementById('d-price-edit').value),
+    price:       parseFloat(document.getElementById('d-price-edit').value) || null,
+    price_tbd:   document.getElementById('d-price-tbd')?.checked || false,
     old_price:   parseFloat(document.getElementById('d-old-edit').value) || null,
     deposit:     depositVal,
     cost:        costVal,
@@ -2025,51 +2055,37 @@ async function saveDetail() {
 // ══════════════════════════════════════
 function openAddProd() {
   if (!currentUser || !['manager','sales'].includes(currentUser.role)) return;
-  ['np-name','np-emoji','np-description','np-price','np-old','np-cost','np-usage','np-ingr','np-tips','np-info'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  ['np-name','np-emoji','np-description','np-price','np-old','np-usage','np-ingr','np-tips','np-info'].forEach(id => document.getElementById(id).value = '');
+  const tbdNew = document.getElementById('np-price-tbd'); if(tbdNew){tbdNew.checked=false; document.getElementById('np-price').disabled=false; document.getElementById('np-old').disabled=false;}
   document.getElementById('np-badge').value = '';
   document.getElementById('np-cat').value = 'hair';
   document.getElementById('np-img-lbl').textContent = 'لم يتم اختيار صورة';
-  document.getElementById('np-img-preview').innerHTML = '';
-  newProdImgs = [];
-  // إظهار سعر الشراء للمدير فقط
-  document.getElementById('np-cost-row').style.display = currentUser.role === 'manager' ? 'block' : 'none';
+  newProdImgData = null;
   openMod('add-prod-modal');
 }
-function previewNpImgs(input) {
-  const files = Array.from(input.files); if (!files.length) return;
-  document.getElementById('np-img-lbl').textContent = files.length + ' صورة مختارة';
-  const preview = document.getElementById('np-img-preview');
-  preview.innerHTML = '';
-  newProdImgs = [];
-  files.forEach((f, i) => {
-    const r = new FileReader();
-    r.onload = ev => {
-      newProdImgs[i] = ev.target.result;
-      const img = document.createElement('img');
-      img.src = ev.target.result;
-      img.style.cssText = 'width:54px;height:54px;object-fit:cover;border-radius:8px;border:2px solid var(--border)';
-      preview.appendChild(img);
-    };
-    r.readAsDataURL(f);
-  });
+function previewNpImg(input) {
+  const f = input.files[0]; if (!f) return;
+  document.getElementById('np-img-lbl').textContent = f.name;
+  const r = new FileReader();
+  r.onload = ev => { newProdImgData = ev.target.result; };
+  r.readAsDataURL(f);
 }
 async function saveNewProd() {
   const name = document.getElementById('np-name').value.trim();
+  const priceTbd = document.getElementById('np-price-tbd')?.checked || false;
   const price = parseFloat(document.getElementById('np-price').value);
-  if (!name || !price) { toast('⚠️ أدخل الاسم والسعر'); return; }
+  if (!name) { toast('⚠️ أدخل اسم المنتج'); return; }
+  if (!priceTbd && !price) { toast('⚠️ أدخل السعر أو اختر "سعر غير محدد"'); return; }
   const usage = document.getElementById('np-usage').value.split('\n').filter(x=>x.trim());
   const ingr = document.getElementById('np-ingr').value.split('\n').filter(x=>x.trim());
-  const imgs = newProdImgs.filter(Boolean);
-  const costEl = document.getElementById('np-cost');
   const prod = {
     name, cat: document.getElementById('np-cat').value,
     emoji: document.getElementById('np-emoji').value || '🧴',
     in_stock: true,
-    img_data: imgs[0] || null,
-    images: imgs,
+    img_data: newProdImgData,
+    price_tbd: priceTbd,
     description: document.getElementById('np-description').value.trim(),
     price, old_price: parseFloat(document.getElementById('np-old').value) || null,
-    cost: (costEl && costEl.value) ? parseFloat(costEl.value) : null,
     badge: document.getElementById('np-badge').value,
     usage, ingredients: ingr,
     tips: document.getElementById('np-tips').value.trim(),
@@ -2586,6 +2602,19 @@ function togglePw(id, btn) {
 // ══════════════════════════════════════
 // START
 // ══════════════════════════════════════
+
+// ══ PRICE TBD TOGGLES ══
+function toggleNpPriceTbd(chk) {
+  document.getElementById('np-price').disabled = chk.checked;
+  document.getElementById('np-old').disabled   = chk.checked;
+  if (chk.checked) { document.getElementById('np-price').value=''; document.getElementById('np-old').value=''; }
+}
+function toggleDPriceTbd(chk) {
+  document.getElementById('d-price-edit').disabled = chk.checked;
+  document.getElementById('d-old-edit').disabled   = chk.checked;
+  if (chk.checked) { document.getElementById('d-price-edit').value=''; document.getElementById('d-old-edit').value=''; }
+}
+
 window.addEventListener('DOMContentLoaded', init);
 </script>
 </body>
