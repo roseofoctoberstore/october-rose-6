@@ -1015,17 +1015,24 @@ body.manager .adm-float{display:block;}
       <div class="f-row"><label>الإيموجي</label><input id="np-emoji" placeholder="💄" maxlength="4"></div>
     </div>
     <div class="f-row">
-      <label>صورة المنتج (اختياري)</label>
-      <input type="file" id="np-img" accept="image/*" style="display:none" onchange="previewNpImg(this)">
-      <div style="display:flex;gap:8px;align-items:center">
-        <button type="button" class="m-save" style="padding:7px 14px;font-size:.8rem" onclick="document.getElementById('np-img').click()">📷 اختر صورة</button>
-        <span id="np-img-lbl" style="font-size:.76rem;color:var(--muted)">لم يتم اختيار صورة</span>
+      <label>صور المنتج (اختياري — يمكن إضافة أكثر من صورة)</label>
+      <input type="file" id="np-img" accept="image/*" multiple style="display:none" onchange="previewNpImgs(this)">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+        <button type="button" class="m-save" style="padding:7px 14px;font-size:.8rem" onclick="document.getElementById('np-img').click()">📷 إضافة صور</button>
+        <span id="np-img-lbl" style="font-size:.76rem;color:var(--muted)">لم يتم اختيار صور</span>
       </div>
+      <div id="np-imgs-preview" style="display:flex;flex-wrap:wrap;gap:7px;margin-top:4px"></div>
     </div>
     <div class="f-row"><label>الوصف</label><textarea id="np-description" placeholder="وصف مختصر"></textarea></div>
     <div class="f-grid">
       <div class="f-row"><label>السعر (ج.م)</label><input id="np-price" type="number" placeholder="150"></div>
       <div class="f-row"><label>السعر القديم</label><input id="np-old" type="number" placeholder="200"></div>
+    </div>
+    <div class="f-row" style="margin-top:2px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:.82rem;color:#7a5000;font-weight:700">
+        💰 سعر الشراء / التكلفة (ج.م) <span style="font-size:.72rem;color:var(--muted);font-weight:400">(داخلي — للإدارة فقط)</span>
+      </label>
+      <input id="np-cost" type="number" placeholder="مثال: 80" style="border-color:var(--gd)">
     </div>
     <div class="f-row" style="margin-top:-4px">
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;color:var(--muted)">
@@ -2055,20 +2062,48 @@ async function saveDetail() {
 // ══════════════════════════════════════
 function openAddProd() {
   if (!currentUser || !['manager','sales'].includes(currentUser.role)) return;
-  ['np-name','np-emoji','np-description','np-price','np-old','np-usage','np-ingr','np-tips','np-info'].forEach(id => document.getElementById(id).value = '');
+  ['np-name','np-emoji','np-description','np-price','np-old','np-cost','np-usage','np-ingr','np-tips','np-info'].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   const tbdNew = document.getElementById('np-price-tbd'); if(tbdNew){tbdNew.checked=false; document.getElementById('np-price').disabled=false; document.getElementById('np-old').disabled=false;}
   document.getElementById('np-badge').value = '';
   document.getElementById('np-cat').value = 'hair';
-  document.getElementById('np-img-lbl').textContent = 'لم يتم اختيار صورة';
-  newProdImgData = null;
+  document.getElementById('np-img-lbl').textContent = 'لم يتم اختيار صور';
+  document.getElementById('np-imgs-preview').innerHTML = '';
+  newProdImgsData = [];
   openMod('add-prod-modal');
 }
-function previewNpImg(input) {
-  const f = input.files[0]; if (!f) return;
-  document.getElementById('np-img-lbl').textContent = f.name;
-  const r = new FileReader();
-  r.onload = ev => { newProdImgData = ev.target.result; };
-  r.readAsDataURL(f);
+let newProdImgsData = []; // مصفوفة الصور الجديدة
+function previewNpImgs(input) {
+  const files = Array.from(input.files); if (!files.length) return;
+  const container = document.getElementById('np-imgs-preview');
+  const lbl = document.getElementById('np-img-lbl');
+  files.forEach(f => {
+    if (!f.type.startsWith('image/')) return;
+    const r = new FileReader();
+    r.onload = ev => {
+      newProdImgsData.push(ev.target.result);
+      lbl.textContent = newProdImgsData.length + ' صورة مختارة';
+      // preview thumbnail
+      const wrap = document.createElement('span');
+      wrap.style.cssText = 'position:relative;display:inline-block';
+      const idx = newProdImgsData.length - 1;
+      wrap.innerHTML = `<img src="${ev.target.result}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:2px solid var(--pk)">
+        <button type="button" onclick="removeNpImg(this,${idx})" style="position:absolute;top:-6px;left:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:1">✕</button>`;
+      container.appendChild(wrap);
+    };
+    r.readAsDataURL(f);
+  });
+  input.value = '';
+}
+function removeNpImg(btn, idx) {
+  newProdImgsData.splice(idx, 1);
+  btn.closest('span').remove();
+  // أعد ترقيم أزرار الحذف
+  document.querySelectorAll('#np-imgs-preview span button').forEach((b, i) => {
+    b.setAttribute('onclick', `removeNpImg(this,${i})`);
+  });
+  document.getElementById('np-img-lbl').textContent = newProdImgsData.length
+    ? newProdImgsData.length + ' صورة مختارة'
+    : 'لم يتم اختيار صور';
 }
 async function saveNewProd() {
   const name = document.getElementById('np-name').value.trim();
@@ -2078,14 +2113,17 @@ async function saveNewProd() {
   if (!priceTbd && !price) { toast('⚠️ أدخل السعر أو اختر "سعر غير محدد"'); return; }
   const usage = document.getElementById('np-usage').value.split('\n').filter(x=>x.trim());
   const ingr = document.getElementById('np-ingr').value.split('\n').filter(x=>x.trim());
+  const imgs = newProdImgsData.length ? newProdImgsData : [];
   const prod = {
     name, cat: document.getElementById('np-cat').value,
     emoji: document.getElementById('np-emoji').value || '🧴',
     in_stock: true,
-    img_data: newProdImgData,
+    img_data: imgs[0] || null,
+    images: imgs,
     price_tbd: priceTbd,
     description: document.getElementById('np-description').value.trim(),
     price, old_price: parseFloat(document.getElementById('np-old').value) || null,
+    cost: parseFloat(document.getElementById('np-cost')?.value) || null,
     badge: document.getElementById('np-badge').value,
     usage, ingredients: ingr,
     tips: document.getElementById('np-tips').value.trim(),
