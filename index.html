@@ -184,6 +184,24 @@ body.staff-sales .p-hbtn.del-btn,body.manager .p-hbtn.del-btn{display:flex;}
 .p-add:hover{background:var(--pk);color:#fff;}
 .no-prods{grid-column:1/-1;text-align:center;padding:50px;color:var(--muted);}
 
+/* ── SKU / PRODUCT CODE ── */
+.p-sku{font-size:.62rem;color:var(--muted);background:var(--gd-pale);border:1px solid var(--gd);border-radius:8px;padding:1px 7px;display:inline-block;margin-bottom:4px;font-weight:700;letter-spacing:.5px;}
+.d-sku-badge{display:inline-flex;align-items:center;gap:4px;background:var(--gd-pale);border:1px solid var(--gd);border-radius:10px;padding:2px 10px;font-size:.72rem;font-weight:700;color:#7a5000;margin-bottom:6px;cursor:pointer;transition:.2s;}
+.d-sku-badge:hover{background:var(--gd);color:var(--dark);}
+.stock-qty-badge{font-size:.7rem;padding:2px 9px;border-radius:10px;font-weight:700;}
+.stock-qty-badge.ok{background:#d4edda;color:#155724;}
+.stock-qty-badge.low{background:#fff3cd;color:#856404;}
+.stock-qty-badge.zero{background:#f8d7da;color:#721c24;}
+
+/* ── INVENTORY PANEL ── */
+.inv-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+.inv-table th{background:var(--dark);color:var(--gd);padding:8px 10px;text-align:right;}
+.inv-table td{padding:7px 10px;border-bottom:1px solid var(--border2);}
+.inv-table tr:hover td{background:var(--pk-pale);}
+.inv-qty-inp{width:70px;border:1.5px solid var(--border);border-radius:8px;padding:4px 6px;text-align:center;font-size:.82rem;outline:none;}
+.inv-qty-inp:focus{border-color:var(--pk);}
+.inv-sku-lbl{font-size:.68rem;color:var(--muted);font-weight:700;background:var(--gd-pale);border:1px solid var(--gd);border-radius:6px;padding:1px 6px;}
+
 /* ── STAFF-ONLY BUTTONS ── */
 .staff-only{display:none;}
 body.staff-sales .staff-only,body.manager .staff-only,body.asst-manager .staff-only{display:inline-flex;}
@@ -455,7 +473,20 @@ body.manager .manager-del-order{display:inline-block;}
 .rb-orders{background:#fff3cd;color:#856404;}
 .rb-sales{background:#d4edda;color:#155724;}
 
-/* ── CONTACT SECTION ── */
+/* ══ DASHBOARD TABS ══ */
+.dash-tab{background:transparent;border:none;padding:12px 18px;font-size:.85rem;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:3px solid transparent;transition:.2s;white-space:nowrap;font-family:'Tajawal',sans-serif;}
+.dash-tab:hover{color:var(--pk);}
+.dash-tab.ac{color:var(--pk);border-bottom-color:var(--pk);}
+.dash-tab-panel{display:none;}
+.dash-tab-panel.ac{display:block;}
+
+/* ══ PRINT STYLES ══ */
+@media print {
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { display: block !important; }
+}
+
+
 .contact-sec{padding:60px 24px;background:linear-gradient(135deg,var(--blk),var(--dark));text-align:center;}
 .contact-sec h2{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--gd);margin-bottom:8px;}
 .contact-sec p{color:var(--pk-light);font-size:.88rem;margin-bottom:34px;}
@@ -752,6 +783,7 @@ body.manager .adm-float{display:block;}
       <!-- Category + badge row -->
       <div class="d-meta-row">
         <span class="d-cat-txt" id="d-cat-txt"></span>
+        <span class="d-sku-badge view-field" id="d-sku-badge" style="display:none" onclick="copyToClipboard(this.dataset.sku)" title="اضغط لنسخ الكود">🏷 <span id="d-sku-val"></span></span>
       </div>
 
       <!-- Name -->
@@ -768,7 +800,11 @@ body.manager .adm-float{display:block;}
         <input class="e-inp" id="d-name-edit" placeholder="اسم المنتج">
       </div>
 
-      <!-- Category edit -->
+      <!-- SKU edit -->
+      <div class="edit-field" style="margin-top:6px">
+        <span class="e-lbl">كود المنتج (SKU) — اختياري</span>
+        <input class="e-inp" id="d-sku-edit" placeholder="مثال: OR-001 أو HAIR-SHM-01">
+      </div>
       <div class="edit-field" style="margin-top:6px">
         <span class="e-lbl">الفئة</span>
         <select class="e-inp" id="d-cat-edit">
@@ -962,31 +998,263 @@ body.manager .adm-float{display:block;}
      DASHBOARD PANEL
 ══════════════════════════════════════ -->
 <div class="dash-panel" id="dash-panel">
-  <div class="dash-box">
+  <div class="dash-box" style="max-width:900px">
     <div class="dash-head">
       <h3>📊 لوحة التحكم</h3>
       <button style="background:none;border:none;color:var(--gd);font-size:1.3rem" onclick="closeDash()">✕</button>
     </div>
-    <div class="dash-body">
-      <div class="stats-row" id="dash-stats"></div>
-      <!-- Staff management (manager only) -->
-      <div id="staff-mgmt" style="display:none">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <h4 style="font-weight:700">👥 الموظفون</h4>
-          <button class="btn-pk" style="padding:6px 14px;font-size:.78rem;border-radius:20px" onclick="openAddStaff()">+ إضافة موظف</button>
-        </div>
-        <div id="staff-list"></div>
-      </div>
-      <!-- Customers list — manager only -->
-      <div id="cust-mgmt" style="display:none;margin-top:20px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <h4 style="font-weight:700">🌸 العملاء المسجّلون</h4>
-        </div>
-        <div id="cust-list"></div>
-      </div>
+    <!-- DASH TABS -->
+    <div style="display:flex;gap:0;border-bottom:2px solid var(--border);background:#fff;overflow-x:auto;scrollbar-width:none">
+      <button class="dash-tab ac" onclick="swDashTab('dt-overview',this)">📊 الإحصائيات</button>
+      <button class="dash-tab" onclick="swDashTab('dt-inventory',this)">📦 المخزون والأكواد</button>
+      <button class="dash-tab" onclick="swDashTab('dt-purchase',this)">🛒 أمر شراء</button>
+      <button class="dash-tab" onclick="swDashTab('dt-invoice',this)">🧾 فاتورة بيع</button>
+      <button class="dash-tab" onclick="swDashTab('dt-staff',this)">👥 الموظفون</button>
+      <button class="dash-tab" onclick="swDashTab('dt-customers',this)">🌸 العملاء</button>
     </div>
+    <div class="dash-body">
+
+      <!-- TAB: OVERVIEW -->
+      <div id="dt-overview" class="dash-tab-panel ac">
+        <div class="stats-row" id="dash-stats"></div>
+      </div>
+
+      <!-- TAB: INVENTORY المخزون والأكواد -->
+      <div id="dt-inventory" class="dash-tab-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+          <h4 style="font-weight:800;font-size:1.05rem;color:var(--deep)">📦 إدارة المخزون والأكواد</h4>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onclick="saveAllInventory()" style="background:var(--success);color:#fff;border:none;border-radius:16px;padding:7px 16px;font-size:.82rem;font-weight:700;cursor:pointer">💾 حفظ الكميات</button>
+            <button onclick="autoGenAllSKUs()" style="background:var(--gd);color:var(--dark);border:none;border-radius:16px;padding:7px 16px;font-size:.82rem;font-weight:700;cursor:pointer">🏷 توليد أكواد تلقائي للكل</button>
+          </div>
+        </div>
+        <!-- فلتر الأقسام -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border2)">
+          <button onclick="filterInvCat('all',this)" class="ftab ac" style="font-size:.75rem">الكل</button>
+          <button onclick="filterInvCat('hair',this)" class="ftab" style="font-size:.75rem">💇‍♀️ شعر</button>
+          <button onclick="filterInvCat('face',this)" class="ftab" style="font-size:.75rem">✨ وجه</button>
+          <button onclick="filterInvCat('body',this)" class="ftab" style="font-size:.75rem">🧴 جسم</button>
+          <button onclick="filterInvCat('makeup',this)" class="ftab" style="font-size:.75rem">💄 ميك أب</button>
+          <button onclick="filterInvCat('women',this)" class="ftab" style="font-size:.75rem">👸 نسائي</button>
+          <button onclick="filterInvCat('care',this)" class="ftab" style="font-size:.75rem">🌿 عناية</button>
+        </div>
+        <p style="font-size:.8rem;color:var(--muted);margin-bottom:10px;background:var(--gd-pale);padding:8px 12px;border-radius:8px;border-right:3px solid var(--gd)">
+          💡 أدخل الكميات والأكواد لكل منتج ثم اضغط «حفظ الكميات». الكود يظهر على المنتج للعميل ويُستخدم في أمر الشراء.
+        </p>
+        <div style="overflow-x:auto">
+          <table class="inv-table" id="inv-table">
+            <thead>
+              <tr>
+                <th>الكود (SKU)</th>
+                <th>اسم المنتج</th>
+                <th style="text-align:center">القسم</th>
+                <th style="text-align:center">الكمية المتاحة</th>
+                <th style="text-align:center">الحالة</th>
+              </tr>
+            </thead>
+            <tbody id="inv-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB: PURCHASE ORDER أمر شراء -->
+      <div id="dt-purchase" class="dash-tab-panel">
+        <!-- Sub-tabs: إنشاء / السجل -->
+        <div style="display:flex;gap:0;border-bottom:2px solid var(--border2);margin-bottom:16px">
+          <button class="d-tab ac" id="po-subtab-new" onclick="swPoSubTab('new',this)" style="font-size:.82rem">➕ أمر جديد</button>
+          <button class="d-tab" id="po-subtab-list" onclick="swPoSubTab('list',this)" style="font-size:.82rem">📋 سجل الأوامر</button>
+        </div>
+
+        <!-- ── إنشاء / تعديل أمر شراء ── -->
+        <div id="po-panel-new">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <span id="po-edit-label" style="font-size:.82rem;color:var(--muted)">أمر شراء جديد</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="savePOOnly()" style="background:var(--success);color:#fff;border:none;border-radius:16px;padding:7px 16px;font-size:.82rem;font-weight:700;cursor:pointer">💾 حفظ الأمر</button>
+              <button onclick="printPO()" style="background:var(--pk);color:#fff;border:none;border-radius:16px;padding:7px 16px;font-size:.82rem;font-weight:700;cursor:pointer">🖨️ طباعة / PDF</button>
+              <button onclick="resetPOForm()" style="background:var(--muted);color:#fff;border:none;border-radius:16px;padding:7px 14px;font-size:.82rem;font-weight:700;cursor:pointer">🆕 أمر جديد</button>
+            </div>
+          </div>
+          <!-- إضافة جميع الأصناف -->
+          <div style="background:var(--pk-pale);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:.82rem;font-weight:700;color:var(--deep)">⚡ إضافة سريعة:</span>
+            <button onclick="bulkAddPORows('all')" style="background:var(--deep);color:var(--gd);border:none;border-radius:14px;padding:5px 14px;font-size:.78rem;font-weight:700;cursor:pointer">كل الأصناف</button>
+            <button onclick="bulkAddPORows('hair')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">💇‍♀️ شعر</button>
+            <button onclick="bulkAddPORows('face')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">✨ وجه</button>
+            <button onclick="bulkAddPORows('body')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">🧴 جسم</button>
+            <button onclick="bulkAddPORows('makeup')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">💄 ميك أب</button>
+            <button onclick="bulkAddPORows('women')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">👸 نسائي</button>
+            <button onclick="bulkAddPORows('care')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">🌿 عناية</button>
+            <button onclick="clearPORows()" style="background:var(--danger);color:#fff;border:none;border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">🗑 مسح الكل</button>
+          </div>
+          <!-- PO Header Info -->
+          <input type="hidden" id="po-edit-id" value="">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <div class="f-row" style="margin:0"><label>اسم المورّد</label><input id="po-supplier" placeholder="مثال: شركة الجمال للتوزيع"></div>
+            <div class="f-row" style="margin:0"><label>رقم هاتف المورّد</label><input id="po-supplier-phone" type="tel" placeholder="+20 1xx xxx xxxx"></div>
+            <div class="f-row" style="margin:0"><label>رقم الأمر</label><input id="po-number" placeholder="PO-001"></div>
+            <div class="f-row" style="margin:0"><label>تاريخ الأمر</label><input id="po-date" type="date"></div>
+            <div class="f-row" style="margin:0;grid-column:1/-1"><label>ملاحظات / شروط الدفع</label><input id="po-notes" placeholder="مثال: الدفع فور الاستلام"></div>
+          </div>
+          <!-- PO Items -->
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:.83rem" id="po-table">
+              <thead>
+                <tr style="background:var(--dark);color:var(--gd)">
+                  <th style="padding:8px 10px;text-align:right">المنتج</th>
+                  <th style="padding:8px 10px;text-align:center">الكمية</th>
+                  <th style="padding:8px 10px;text-align:center">سعر الوحدة (ج.م)</th>
+                  <th style="padding:8px 10px;text-align:center">الإجمالي</th>
+                  <th style="padding:8px 6px;text-align:center">حذف</th>
+                </tr>
+              </thead>
+              <tbody id="po-rows"></tbody>
+              <tfoot>
+                <tr style="background:var(--pk-pale);font-weight:700">
+                  <td colspan="3" style="padding:10px 10px;text-align:left;color:var(--deep)">الإجمالي الكلي</td>
+                  <td style="padding:10px;text-align:center;color:var(--pk);font-size:1rem" id="po-total">0 ج.م</td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div style="margin-top:10px">
+            <button onclick="addPORow()" style="background:var(--pk);color:#fff;border:none;border-radius:16px;padding:7px 18px;font-size:.82rem;font-weight:700;cursor:pointer">➕ إضافة صنف</button>
+          </div>
+        </div>
+
+        <!-- ── سجل أوامر الشراء ── -->
+        <div id="po-panel-list" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:.88rem;font-weight:700;color:var(--deep)">📋 سجل أوامر الشراء</span>
+            <button onclick="loadPOList()" style="background:var(--pk-pale);color:var(--pk);border:1px solid var(--pk);border-radius:12px;padding:5px 14px;font-size:.78rem;cursor:pointer">🔄 تحديث</button>
+          </div>
+          <div id="po-list-body"><p style="color:var(--muted);text-align:center;padding:20px">جارٍ التحميل...</p></div>
+        </div>
+      </div>
+
+      <!-- TAB: SALES INVOICE فاتورة بيع -->
+      <div id="dt-invoice" class="dash-tab-panel">
+        <!-- Sub-tabs -->
+        <div style="display:flex;gap:0;border-bottom:2px solid var(--border2);margin-bottom:16px">
+          <button class="d-tab ac" id="inv-subtab-new" onclick="swInvSubTab('new',this)" style="font-size:.82rem">➕ فاتورة جديدة</button>
+          <button class="d-tab" id="inv-subtab-list" onclick="swInvSubTab('list',this)" style="font-size:.82rem">📋 سجل الفواتير</button>
+        </div>
+
+        <!-- ── إنشاء / تعديل فاتورة ── -->
+        <div id="inv-panel-new">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+            <span id="inv-edit-label" style="font-size:.82rem;color:var(--muted)">فاتورة بيع جديدة</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onclick="saveInvOnly()" style="background:var(--success);color:#fff;border:none;border-radius:16px;padding:7px 16px;font-size:.82rem;font-weight:700;cursor:pointer">💾 حفظ الفاتورة</button>
+              <button onclick="printInvoice()" style="background:var(--pk);color:#fff;border:none;border-radius:16px;padding:7px 16px;font-size:.82rem;font-weight:700;cursor:pointer">🖨️ طباعة / PDF</button>
+              <button onclick="resetInvForm()" style="background:var(--muted);color:#fff;border:none;border-radius:16px;padding:7px 14px;font-size:.82rem;font-weight:700;cursor:pointer">🆕 فاتورة جديدة</button>
+            </div>
+          </div>
+          <!-- إضافة جميع الأصناف -->
+          <div style="background:var(--pk-pale);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-size:.82rem;font-weight:700;color:var(--deep)">⚡ إضافة سريعة:</span>
+            <button onclick="bulkAddInvRows('all')" style="background:var(--deep);color:var(--gd);border:none;border-radius:14px;padding:5px 14px;font-size:.78rem;font-weight:700;cursor:pointer">كل الأصناف</button>
+            <button onclick="bulkAddInvRows('hair')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">💇‍♀️ شعر</button>
+            <button onclick="bulkAddInvRows('face')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">✨ وجه</button>
+            <button onclick="bulkAddInvRows('body')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">🧴 جسم</button>
+            <button onclick="bulkAddInvRows('makeup')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">💄 ميك أب</button>
+            <button onclick="bulkAddInvRows('women')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">👸 نسائي</button>
+            <button onclick="bulkAddInvRows('care')" style="background:#fff;border:1px solid var(--border);border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">🌿 عناية</button>
+            <button onclick="clearInvRows()" style="background:var(--danger);color:#fff;border:none;border-radius:14px;padding:5px 12px;font-size:.78rem;cursor:pointer">🗑 مسح الكل</button>
+          </div>
+          <!-- Invoice Header -->
+          <input type="hidden" id="inv-edit-id" value="">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+            <div class="f-row" style="margin:0"><label>اسم العميل</label><input id="inv-client" placeholder="اسم العميل أو الشركة"></div>
+            <div class="f-row" style="margin:0"><label>رقم هاتف العميل</label><input id="inv-client-phone" type="tel" placeholder="+20 1xx xxx xxxx"></div>
+            <div class="f-row" style="margin:0;grid-column:1/-1"><label>📍 عنوان العميل</label><input id="inv-client-address" placeholder="العنوان / المنطقة / المدينة"></div>
+            <div class="f-row" style="margin:0"><label>رقم الفاتورة</label><input id="inv-number" placeholder="INV-001"></div>
+            <div class="f-row" style="margin:0"><label>تاريخ الفاتورة</label><input id="inv-date" type="date"></div>
+            <div class="f-row" style="margin:0"><label>طريقة الدفع</label>
+              <select id="inv-payment">
+                <option value="كاش">كاش</option>
+                <option value="تحويل بنكي">تحويل بنكي</option>
+                <option value="فودافون كاش">فودافون كاش</option>
+                <option value="إنستاباي">إنستاباي</option>
+                <option value="آجل">آجل (دين)</option>
+              </select>
+            </div>
+            <div class="f-row" style="margin:0"><label>ملاحظات</label><input id="inv-notes" placeholder="أي ملاحظات إضافية..."></div>
+          </div>
+          <!-- Invoice Items -->
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:.83rem" id="inv-table">
+              <thead>
+                <tr style="background:var(--dark);color:var(--gd)">
+                  <th style="padding:8px 10px;text-align:right">المنتج</th>
+                  <th style="padding:8px 10px;text-align:center">الكمية</th>
+                  <th style="padding:8px 10px;text-align:center">سعر الوحدة (ج.م)</th>
+                  <th style="padding:8px 10px;text-align:center">الخصم %</th>
+                  <th style="padding:8px 10px;text-align:center">الإجمالي</th>
+                  <th style="padding:8px 6px;text-align:center">حذف</th>
+                </tr>
+              </thead>
+              <tbody id="inv-rows"></tbody>
+              <tfoot id="inv-tfoot">
+                <tr>
+                  <td colspan="4" style="padding:8px 10px;text-align:left;color:var(--muted);font-size:.82rem">المجموع قبل الخصم</td>
+                  <td style="padding:8px 10px;text-align:center;font-weight:700" id="inv-subtotal">0 ج.م</td><td></td>
+                </tr>
+                <tr id="inv-disc-row" style="display:none">
+                  <td colspan="4" style="padding:4px 10px;text-align:left;color:var(--pk);font-size:.82rem">إجمالي الخصم</td>
+                  <td style="padding:4px 10px;text-align:center;color:var(--pk);font-weight:700" id="inv-disc-total">0 ج.م</td><td></td>
+                </tr>
+                <tr style="background:var(--pk-pale);font-weight:700">
+                  <td colspan="4" style="padding:10px;text-align:left;color:var(--deep)">الإجمالي الكلي</td>
+                  <td style="padding:10px;text-align:center;color:var(--pk);font-size:1rem" id="inv-total">0 ج.م</td><td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div style="margin-top:10px">
+            <button onclick="addInvRow()" style="background:var(--pk);color:#fff;border:none;border-radius:16px;padding:7px 18px;font-size:.82rem;font-weight:700;cursor:pointer">➕ إضافة صنف</button>
+          </div>
+        </div>
+
+        <!-- ── سجل الفواتير ── -->
+        <div id="inv-panel-list" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:.88rem;font-weight:700;color:var(--deep)">📋 سجل فواتير البيع</span>
+            <button onclick="loadInvList()" style="background:var(--pk-pale);color:var(--pk);border:1px solid var(--pk);border-radius:12px;padding:5px 14px;font-size:.78rem;cursor:pointer">🔄 تحديث</button>
+          </div>
+          <div id="inv-list-body"><p style="color:var(--muted);text-align:center;padding:20px">جارٍ التحميل...</p></div>
+        </div>
+      </div>
+
+      <!-- TAB: STAFF -->
+      <div id="dt-staff" class="dash-tab-panel">
+        <div id="staff-mgmt-inner">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h4 style="font-weight:700">👥 الموظفون</h4>
+            <button class="btn-pk" style="padding:6px 14px;font-size:.78rem;border-radius:20px" onclick="openAddStaff()">+ إضافة موظف</button>
+          </div>
+          <div id="staff-list"></div>
+        </div>
+      </div>
+
+      <!-- TAB: CUSTOMERS -->
+      <div id="dt-customers" class="dash-tab-panel">
+        <div id="cust-mgmt-inner">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h4 style="font-weight:700">🌸 العملاء المسجّلون</h4>
+          </div>
+          <div id="cust-list"></div>
+        </div>
+      </div>
+
+    </div><!-- /dash-body -->
   </div>
 </div>
+
+<!-- ══ PRINT TEMPLATES (hidden) ══ -->
+<div id="print-po-tpl" style="display:none"></div>
+<div id="print-inv-tpl" style="display:none"></div>
 
 <!-- CART -->
 <div class="cart-side" id="cart-side">
@@ -1326,11 +1594,12 @@ async function init() {
 
   // ② Sync with Supabase
   try {
-    PRODUCTS = await sbGet('products', 'order=created_at.desc&select=id,name,cat,emoji,price,old_price,price_tbd,badge,in_stock,description,deposit,cost,usage,ingredients,tips,info,img_data,created_at');
+    PRODUCTS = await sbGet('products', 'order=created_at.desc&select=id,name,cat,emoji,price,old_price,price_tbd,badge,in_stock,description,deposit,cost,usage,ingredients,tips,info,img_data,sku,stock_qty,created_at');
     saveLocal('products', PRODUCTS);
     document.getElementById('stat-n').textContent = PRODUCTS.length;
     renderCats();
     renderProds('all');
+    buildProdDatalist();
 
     try {
       const sets = await sbGet('settings', 'limit=1');
@@ -1428,6 +1697,24 @@ async function doLogin() {
       toast('✦ مرحباً بك يا مدير 👑');
       return;
     }
+    // لو SETTINGS مش محملة بعد، جرب تحملها أولاً
+    if (!SETTINGS.id) {
+      try {
+        const sets = await sbGet('settings', 'limit=1');
+        if (sets.length) Object.assign(SETTINGS, sets[0]);
+      } catch(e2) {
+        toast('⚠️ تعذّر الاتصال بقاعدة البيانات — تأكد من الإنترنت');
+        console.error('Settings fetch failed:', e2);
+        return;
+      }
+      // إعادة المحاولة بعد تحميل الإعدادات
+      if (SETTINGS.manager_username && uname === SETTINGS.manager_username && pass === SETTINGS.manager_password) {
+        setUser({ id: 'manager', username: uname, name: 'المدير', role: 'manager' });
+        closeMod('login-modal');
+        toast('✦ مرحباً بك يا مدير 👑');
+        return;
+      }
+    }
     // Check staff from DB
     const staff = await sbGet('staff', `username=eq.${encodeURIComponent(uname)}&password=eq.${encodeURIComponent(pass)}&select=*`);
     if (staff.length > 0) {
@@ -1439,7 +1726,11 @@ async function doLogin() {
       toast('⚠️ اسم المستخدم أو كلمة المرور غير صحيحة');
     }
   } catch(e) {
-    toast('⚠️ خطأ في الاتصال');
+    if (e.message && (e.message.includes('fetch') || e.message.includes('network') || e.message.includes('Failed'))) {
+      toast('⚠️ تعذّر الاتصال — تأكد من الإنترنت');
+    } else {
+      toast('⚠️ خطأ في الاتصال: ' + (e.message || ''));
+    }
     console.error(e);
   }
 }
@@ -1527,6 +1818,7 @@ function renderProds(filter = 'all') {
       </div>
       <div class="p-body">
         <div class="p-cat-lbl">${catName(p.cat)}</div>
+        ${p.sku ? `<div class="p-sku">🏷 ${p.sku}</div>` : ''}
         <div class="p-name">${p.name}</div>
         <div class="p-desc">${p.description||''}</div>
         <div class="p-foot">
@@ -1747,6 +2039,19 @@ function openDetail(id) {
   // ── Name ──
   document.getElementById('d-name-view').textContent = p.name || '';
   document.getElementById('d-name-edit').value = p.name || '';
+
+  // ── SKU ──
+  const skuBadge = document.getElementById('d-sku-badge');
+  const skuVal   = document.getElementById('d-sku-val');
+  const skuEdit  = document.getElementById('d-sku-edit');
+  if (p.sku) {
+    skuVal.textContent = p.sku;
+    skuBadge.dataset.sku = p.sku;
+    skuBadge.style.display = 'inline-flex';
+  } else {
+    skuBadge.style.display = 'none';
+  }
+  if (skuEdit) skuEdit.value = p.sku || '';
 
   // ── Price + old price ──
   const priceViewEl = document.getElementById('d-price-view');
@@ -2054,6 +2359,7 @@ async function saveDetail() {
     ingredients: ingr,
     tips:        document.getElementById('tips-edit').value.trim(),
     info:        document.getElementById('info-edit').value.trim(),
+    sku:         (document.getElementById('d-sku-edit')?.value || '').trim() || null,
   };
   try {
     await sbPatch('products', openProdId, updates);
@@ -2335,6 +2641,16 @@ async function openDash() {
   document.body.style.overflow = 'hidden';
   pushModalState('dash');
   const isManager = role === 'manager';
+
+  // Show/hide manager-only tabs
+  document.querySelectorAll('.dash-tab').forEach((t,i) => {
+    // tabs: 0=overview,1=inventory,2=purchase,3=invoice,4=staff,5=customers
+    if (i===1||i===2||i===3||i===5) t.style.display = isManager ? '' : 'none';
+  });
+
+  // Default to overview tab
+  swDashTab('dt-overview', document.querySelector('.dash-tab'));
+
   try {
     const orders = await sbGet('orders', 'select=id,total,status');
     const newOrds = orders.filter(o => o.status === 'new').length;
@@ -2350,20 +2666,16 @@ async function openDash() {
     }
     document.getElementById('dash-stats').innerHTML = statsHtml;
 
-    // Staff mgmt — manager only adds staff, asst_manager just views
-    const staffMgmt = document.getElementById('staff-mgmt');
-    staffMgmt.style.display = 'block';
-    const addBtn = staffMgmt.querySelector('button');
-    if (addBtn) addBtn.style.display = isManager ? 'block' : 'none';
-
-    // Customers list — manager only
-    const custMgmt = document.getElementById('cust-mgmt');
-    if (custMgmt) custMgmt.style.display = isManager ? 'block' : 'none';
-    if (isManager) loadCustomersList();
-
+    // Staff list
     const staffList = await sbGet('staff', 'order=created_at.desc');
     STAFF = staffList;
     renderStaffList();
+
+    // Customers — manager only
+    if (isManager) loadCustomersList();
+
+    // Init PO & Invoice if manager
+    if (isManager) { initPORows(); initInvRows(); }
   } catch(e) { console.error(e); }
 }
 function closeDash() { document.getElementById('dash-panel').classList.remove('open'); document.body.style.overflow = ''; }
@@ -2663,6 +2975,1088 @@ function toggleDPriceTbd(chk) {
   document.getElementById('d-price-edit').disabled = chk.checked;
   document.getElementById('d-old-edit').disabled   = chk.checked;
   if (chk.checked) { document.getElementById('d-price-edit').value=''; document.getElementById('d-old-edit').value=''; }
+}
+
+// ══════════════════════════════════════
+// DASHBOARD TABS
+// ══════════════════════════════════════
+function swDashTab(id, btn) {
+  document.querySelectorAll('.dash-tab').forEach(t => t.classList.remove('ac'));
+  document.querySelectorAll('.dash-tab-panel').forEach(p => p.classList.remove('ac'));
+  if (btn) btn.classList.add('ac');
+  const panel = document.getElementById(id);
+  if (panel) panel.classList.add('ac');
+  // Render inventory table when tab opened
+  if (id === 'dt-inventory') renderInventoryTable();
+  // Re-init PO rows when tab opened (to refresh product list with SKUs)
+  if (id === 'dt-purchase') {
+    // ensure correct sub-tab shown
+    document.getElementById('po-panel-new').style.display = '';
+    document.getElementById('po-panel-list').style.display = 'none';
+    document.querySelectorAll('#dt-purchase .d-tab').forEach((t,i) => { t.classList.toggle('ac', i===0); });
+    if (!document.getElementById('po-edit-id').value) initPORows();
+  }
+  if (id === 'dt-invoice') {
+    document.getElementById('inv-panel-new').style.display = '';
+    document.getElementById('inv-panel-list').style.display = 'none';
+    document.querySelectorAll('#dt-invoice .d-tab').forEach((t,i) => { t.classList.toggle('ac', i===0); });
+    if (!document.getElementById('inv-edit-id').value) initInvRows();
+  }
+}
+
+// ══════════════════════════════════════
+// SUPABASE TABLES REQUIRED (run once in SQL Editor):
+// ══════════════════════════════════════
+/*
+CREATE TABLE purchase_orders (
+  id             bigint generated always as identity primary key,
+  serial_number  integer unique,
+  po_number      text,
+  supplier       text,
+  supplier_phone text,
+  date           date,
+  notes          text,
+  total          numeric,
+  items          jsonb,
+  created_by     text,
+  created_at     timestamptz default now()
+);
+
+CREATE TABLE sales_invoices (
+  id              bigint generated always as identity primary key,
+  serial_number   integer unique,
+  inv_number      text,
+  client          text,
+  client_phone    text,
+  client_address  text,
+  date            date,
+  payment_method  text,
+  notes           text,
+  subtotal        numeric,
+  discount_total  numeric,
+  total           numeric,
+  items           jsonb,
+  created_by      text,
+  created_at      timestamptz default now()
+);
+
+-- ══ أعمدة جديدة مطلوبة في جدول products ══
+-- أضفها في Supabase > Table Editor > products > Add Column
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS sku text unique;
+-- ALTER TABLE products ADD COLUMN IF NOT EXISTS stock_qty integer;
+*/
+
+// ══════════════════════════════════════
+// INVENTORY & SKU MANAGEMENT
+// ══════════════════════════════════════
+let invCatFilter = 'all';
+
+function filterInvCat(cat, btn) {
+  invCatFilter = cat;
+  document.querySelectorAll('#dt-inventory .ftab').forEach(b => b.classList.remove('ac'));
+  if (btn) btn.classList.add('ac');
+  renderInventoryTable();
+}
+
+function renderInventoryTable() {
+  const tbody = document.getElementById('inv-tbody');
+  if (!tbody) return;
+  const list = invCatFilter === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.cat === invCatFilter);
+  if (!list.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--muted)">لا توجد منتجات في هذا القسم</td></tr>';
+    return;
+  }
+  const catNames = {hair:'💇‍♀️ شعر',face:'✨ وجه',body:'🧴 جسم',makeup:'💄 ميك أب',women:'👸 نسائي',care:'🌿 عناية'};
+  tbody.innerHTML = list.map(p => {
+    const qty = p.stock_qty ?? '';
+    const qtyClass = qty === '' ? '' : qty > 5 ? 'ok' : qty > 0 ? 'low' : 'zero';
+    const qtyLabel = qty === '' ? '—' : qty > 5 ? `✅ ${qty}` : qty > 0 ? `⚠️ ${qty}` : '❌ نفد';
+    return `<tr>
+      <td>
+        <input class="inv-qty-inp" style="width:110px;font-size:.75rem" id="inv-sku-${p.id}"
+          value="${p.sku||''}" placeholder="أدخل كود..."
+          title="كود المنتج (SKU)">
+      </td>
+      <td style="font-weight:600;font-size:.83rem">${p.name}</td>
+      <td style="text-align:center;font-size:.75rem;color:var(--muted)">${catNames[p.cat]||p.cat}</td>
+      <td style="text-align:center">
+        <input type="number" min="0" class="inv-qty-inp" id="inv-qty-${p.id}"
+          value="${qty}" placeholder="0">
+      </td>
+      <td style="text-align:center">
+        <span class="stock-qty-badge ${qtyClass}">${qtyLabel}</span>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+async function saveAllInventory() {
+  if (!currentUser || currentUser.role !== 'manager') { toast('⚠️ هذه الميزة للمدير فقط'); return; }
+  toast('⏳ جارٍ الحفظ...');
+  let saved = 0, errors = 0;
+  for (const p of PRODUCTS) {
+    const qtyEl = document.getElementById(`inv-qty-${p.id}`);
+    const skuEl = document.getElementById(`inv-sku-${p.id}`);
+    if (!qtyEl && !skuEl) continue;
+    const qty = qtyEl ? (qtyEl.value !== '' ? parseInt(qtyEl.value) : null) : p.stock_qty;
+    const sku = skuEl ? (skuEl.value.trim() || null) : p.sku;
+    const updates = {};
+    if (qty !== p.stock_qty) updates.stock_qty = qty;
+    if (sku !== p.sku) updates.sku = sku;
+    if (qty !== null && qty !== undefined) {
+      const newStock = qty > 0;
+      if (newStock !== p.in_stock) updates.in_stock = newStock;
+    }
+    if (Object.keys(updates).length === 0) continue;
+    try {
+      await sbPatch('products', p.id, updates);
+      Object.assign(p, updates);
+      saved++;
+    } catch(e) { errors++; console.error(`Error updating product ${p.id}:`, e); }
+  }
+  saveLocal('products', PRODUCTS);
+  renderProds(curFilter);
+  renderInventoryTable();
+  toast(errors ? `⚠️ تم الحفظ جزئياً: ${saved} منتج، ${errors} خطأ` : `✅ تم حفظ ${saved} منتج بنجاح`);
+}
+
+function autoGenAllSKUs() {
+  if (!currentUser || currentUser.role !== 'manager') { toast('⚠️ هذه الميزة للمدير فقط'); return; }
+  const catPfx = {hair:'HR',face:'FC',body:'BD',makeup:'MK',women:'WM',care:'CR'};
+  // ترقيم منفصل لكل قسم
+  const counters = {};
+  PRODUCTS.forEach(p => {
+    const pfx = catPfx[p.cat] || 'PR';
+    counters[pfx] = (counters[pfx] || 0) + 1;
+    const skuEl = document.getElementById(`inv-sku-${p.id}`);
+    if (skuEl) {
+      // توليد الكود سواء كان فاضي أو فيه قيمة
+      skuEl.value = `OR-${pfx}-${String(counters[pfx]).padStart(3,'0')}`;
+      skuEl.style.background = '#d4edda';
+    }
+  });
+  toast('🏷 تم توليد أكواد لجميع المنتجات — اضغط «حفظ الكميات» لحفظها');
+}
+
+// دالة قديمة للتوافق
+function autoGenSKUs() { autoGenAllSKUs(); }
+
+function copyToClipboard(text) {
+  if (!text) return;
+  navigator.clipboard?.writeText(text).then(() => toast(`✦ تم نسخ الكود: ${text}`)).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+    toast(`✦ تم نسخ الكود: ${text}`);
+  });
+}
+
+// ══════════════════════════════════════
+// PURCHASE ORDER — أمر شراء
+// ══════════════════════════════════════
+let poRowCount = 0;
+
+// Sub-tab switching
+function swPoSubTab(tab, btn) {
+  document.querySelectorAll('#dt-purchase .d-tab').forEach(t => t.classList.remove('ac'));
+  if (btn) btn.classList.add('ac');
+  document.getElementById('po-panel-new').style.display  = tab === 'new'  ? '' : 'none';
+  document.getElementById('po-panel-list').style.display = tab === 'list' ? '' : 'none';
+  if (tab === 'list') loadPOList();
+}
+function swInvSubTab(tab, btn) {
+  document.querySelectorAll('#dt-invoice .d-tab').forEach(t => t.classList.remove('ac'));
+  if (btn) btn.classList.add('ac');
+  document.getElementById('inv-panel-new').style.display  = tab === 'new'  ? '' : 'none';
+  document.getElementById('inv-panel-list').style.display = tab === 'list' ? '' : 'none';
+  if (tab === 'list') loadInvList();
+}
+
+// Bulk add rows by category
+function bulkAddPORows(cat) {
+  const list = cat === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.cat === cat);
+  if (!list.length) { toast('⚠️ لا توجد منتجات في هذا القسم'); return; }
+  list.forEach(p => {
+    poRowCount++;
+    const rid = 'po-r' + poRowCount;
+    const tr = document.createElement('tr');
+    tr.id = rid;
+    tr.style.cssText = 'border-bottom:1px solid var(--border2)';
+    const costLabel = p.cost ? ` (تكلفة: ${p.cost} ج.م)` : '';
+    const stockLabel = p.stock_qty != null ? ` ← متاح: ${p.stock_qty}` : '';
+    const opts = `<option value="">— اختر —</option>` +
+      PRODUCTS.map(px => `<option value="${px.id}" data-name="${px.name}" data-cost="${px.cost||''}" data-sku="${px.sku||''}" data-stock="${px.stock_qty??''}" ${px.id===p.id?'selected':''}>${px.sku?'['+px.sku+'] ':''}${px.name}${px.cost?' (تكلفة: '+px.cost+' ج.م)':''}${px.stock_qty!=null?' ← متاح: '+px.stock_qty:''}</option>`).join('');
+    tr.innerHTML = `
+      <td style="padding:6px 6px;min-width:200px">
+        <div style="display:flex;gap:4px;margin-bottom:4px">
+          <input id="${rid}-sku" value="${p.sku||''}" placeholder="🏷 SKU..."
+            style="width:110px;border:1.5px solid ${p.sku?'var(--success)':'var(--gd)'};border-radius:8px;padding:5px 8px;font-size:.78rem;outline:none;font-family:'Tajawal',sans-serif;background:${p.sku?'#d4edda':'var(--gd-pale)'};color:#7a5000;font-weight:700"
+            oninput="onPOSkuInput('${rid}')">
+          <span style="font-size:.7rem;color:var(--muted);margin:auto 0">أو</span>
+        </div>
+        <select id="${rid}-sel" onchange="onPOProdSelect('${rid}')"
+          style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:.82rem;outline:none;font-family:'Tajawal',sans-serif;color:var(--deep);background:#fff;margin-bottom:4px">${opts}</select>
+        <input id="${rid}-name" value="" placeholder="أو اكتب اسم صنف آخر..."
+          style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:5px 8px;font-size:.8rem;outline:none;font-family:'Tajawal',sans-serif;color:var(--muted);background:#fdf4f8">
+      </td>
+      <td style="padding:6px 4px;text-align:center">
+        <input type="number" id="${rid}-qty" min="1" value="1" oninput="calcPORow('${rid}')"
+          style="width:60px;border:1.5px solid var(--border);border-radius:8px;padding:6px;font-size:.83rem;text-align:center;outline:none">
+        <div id="${rid}-stock-hint" style="font-size:.62rem;color:${p.stock_qty>5?'#155724':p.stock_qty>0?'#856404':'#721c24'};margin-top:2px">${p.stock_qty!=null?'📦 متاح: '+p.stock_qty:''}</div>
+      </td>
+      <td style="padding:6px 4px;text-align:center">
+        <input type="number" id="${rid}-price" min="0" value="${p.cost||''}" placeholder="0" oninput="calcPORow('${rid}')"
+          style="width:80px;border:1.5px solid var(--border);border-radius:8px;padding:6px;font-size:.83rem;text-align:center;outline:none">
+        <div id="${rid}-price-hint" style="font-size:.65rem;color:var(--success);margin-top:2px;text-align:center">${p.cost?'✓ من القاعدة':''}</div>
+      </td>
+      <td style="padding:6px 4px;text-align:center;font-weight:700;color:var(--pk)" id="${rid}-total">${(p.cost||0).toFixed(2)}</td>
+      <td style="padding:6px 4px;text-align:center">
+        <button onclick="removePORow('${rid}')" style="background:var(--danger);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.75rem;cursor:pointer">✕</button>
+      </td>`;
+    document.getElementById('po-rows').appendChild(tr);
+  });
+  calcPOTotal();
+  toast(`✅ تم إضافة ${list.length} صنف`);
+}
+
+function clearPORows() {
+  document.getElementById('po-rows').innerHTML = '';
+  poRowCount = 0;
+  calcPOTotal();
+}
+
+function bulkAddInvRows(cat) {
+  const list = cat === 'all' ? PRODUCTS : PRODUCTS.filter(p => p.cat === cat);
+  if (!list.length) { toast('⚠️ لا توجد منتجات في هذا القسم'); return; }
+  list.forEach(p => {
+    invRowCount++;
+    const rid = 'inv-r' + invRowCount;
+    const tr = document.createElement('tr');
+    tr.id = rid;
+    tr.style.cssText = 'border-bottom:1px solid var(--border2)';
+    const opts = `<option value="">— اختر —</option>` +
+      PRODUCTS.map(px => `<option value="${px.id}" data-name="${px.name}" data-price="${px.price||''}" data-sku="${px.sku||''}" ${px.id===p.id?'selected':''}>${px.sku?'['+px.sku+'] ':''}${px.name}${px.price?' ('+px.price+' ج.م)':''}</option>`).join('');
+    tr.innerHTML = `
+      <td style="padding:6px 6px;min-width:200px">
+        <select id="${rid}-sel" onchange="onInvProdSelect('${rid}')"
+          style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:.82rem;outline:none;font-family:'Tajawal',sans-serif;color:var(--deep);background:#fff;margin-bottom:4px">${opts}</select>
+        <input id="${rid}-name" value="" placeholder="أو اكتب اسم آخر..."
+          style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:5px 8px;font-size:.8rem;outline:none;font-family:'Tajawal',sans-serif;color:var(--muted);background:#fdf4f8">
+      </td>
+      <td style="padding:6px 4px;text-align:center">
+        <input type="number" id="${rid}-qty" min="1" value="1" oninput="calcInvRow('${rid}')"
+          style="width:55px;border:1.5px solid var(--border);border-radius:8px;padding:6px 4px;font-size:.83rem;text-align:center;outline:none">
+      </td>
+      <td style="padding:6px 4px;text-align:center">
+        <input type="number" id="${rid}-price" min="0" value="${p.price||''}" placeholder="0" oninput="calcInvRow('${rid}')"
+          style="width:75px;border:1.5px solid var(--border);border-radius:8px;padding:6px 4px;font-size:.83rem;text-align:center;outline:none">
+        <div id="${rid}-price-hint" style="font-size:.65rem;color:var(--success);margin-top:2px;text-align:center">${p.price?'✓ من القاعدة':''}</div>
+      </td>
+      <td style="padding:6px 4px;text-align:center">
+        <input type="number" id="${rid}-disc" min="0" max="100" value="0" oninput="calcInvRow('${rid}')"
+          style="width:55px;border:1.5px solid var(--border);border-radius:8px;padding:6px 4px;font-size:.83rem;text-align:center;outline:none">
+      </td>
+      <td style="padding:6px 4px;text-align:center;font-weight:700;color:var(--pk)" id="${rid}-total">${(p.price||0).toFixed(2)}</td>
+      <td style="padding:6px 4px;text-align:center">
+        <button onclick="removeInvRow('${rid}')" style="background:var(--danger);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.75rem;cursor:pointer">✕</button>
+      </td>`;
+    document.getElementById('inv-rows').appendChild(tr);
+  });
+  calcInvTotal();
+  toast(`✅ تم إضافة ${list.length} صنف`);
+}
+
+function clearInvRows() {
+  document.getElementById('inv-rows').innerHTML = '';
+  invRowCount = 0;
+  calcInvTotal();
+}
+
+// حفظ الأمر بدون طباعة
+async function savePOOnly() {
+  const d = getPOData();
+  if (!d.rows.length) { toast('⚠️ أضف أصناف أولاً'); return; }
+  try {
+    const editId = document.getElementById('po-edit-id').value;
+    const record = {
+      serial_number: d.serial || undefined,
+      po_number:     d.number,
+      supplier:      d.supplier,
+      supplier_phone:d.supplierPhone,
+      date:          d.date || new Date().toISOString().split('T')[0],
+      notes:         d.notes,
+      total:         d.subtotal,
+      items:         JSON.stringify(d.rows),
+      created_by:    currentUser?.username || 'manager',
+    };
+    if (editId) {
+      await sbPatch('purchase_orders', parseInt(editId), record);
+      toast('✅ تم تحديث أمر الشراء بنجاح');
+    } else {
+      record.created_at = new Date().toISOString();
+      await sbPost('purchase_orders', record);
+      toast('✅ تم حفظ أمر الشراء بنجاح');
+      setTimeout(() => initPORows(), 300);
+    }
+  } catch(e) { toast('⚠️ خطأ في الحفظ: ' + e.message); console.error(e); }
+}
+
+async function saveInvOnly() {
+  const d = getInvData();
+  if (!d.rows.length) { toast('⚠️ أضف أصناف أولاً'); return; }
+  try {
+    const editId = document.getElementById('inv-edit-id').value;
+    const record = {
+      inv_number:      d.number,
+      client:          d.client,
+      client_phone:    d.clientPhone,
+      client_address:  d.clientAddress,
+      date:            d.date || new Date().toISOString().split('T')[0],
+      payment_method:  d.payment,
+      notes:           d.notes,
+      subtotal:        d.sub,
+      discount_total:  d.discAmt,
+      total:           d.net,
+      items:           JSON.stringify(d.rows),
+      created_by:      currentUser?.username || 'manager',
+    };
+    if (editId) {
+      await sbPatch('sales_invoices', parseInt(editId), record);
+      toast('✅ تم تحديث الفاتورة بنجاح');
+    } else {
+      record.serial_number = d.serial || undefined;
+      record.created_at = new Date().toISOString();
+      await sbPost('sales_invoices', record);
+      toast('✅ تم حفظ الفاتورة بنجاح');
+      setTimeout(() => initInvRows(), 300);
+    }
+  } catch(e) { toast('⚠️ خطأ في الحفظ: ' + e.message); console.error(e); }
+}
+
+function resetPOForm() {
+  document.getElementById('po-edit-id').value = '';
+  document.getElementById('po-edit-label').textContent = 'أمر شراء جديد';
+  initPORows();
+}
+function resetInvForm() {
+  document.getElementById('inv-edit-id').value = '';
+  document.getElementById('inv-edit-label').textContent = 'فاتورة بيع جديدة';
+  initInvRows();
+}
+
+// سجل أوامر الشراء
+async function loadPOList() {
+  const el = document.getElementById('po-list-body');
+  el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">⏳ جارٍ التحميل...</p>';
+  try {
+    const list = await sbGet('purchase_orders', 'order=created_at.desc&select=*');
+    if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">لا توجد أوامر شراء بعد</p>'; return; }
+    el.innerHTML = list.map(po => {
+      const items = (() => { try { return JSON.parse(po.items||'[]'); } catch { return []; } })();
+      const d = new Date(po.created_at).toLocaleDateString('ar-EG');
+      const itemsSummary = items.slice(0,3).map(i=>`${i.name} ×${i.qty}`).join(' · ') + (items.length>3?` · و${items.length-3} أخرى`:'');
+      return `<div style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1.5px solid var(--border);box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+          <div>
+            <span style="font-weight:800;color:var(--deep)">${po.po_number}</span>
+            <span style="font-size:.75rem;color:var(--muted);margin-right:10px">🕐 ${d}</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-weight:700;color:var(--pk);font-size:.95rem">${(po.total||0).toFixed(2)} ج.م</span>
+            <button onclick="editPO(${po.id})" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
+            <button onclick="reprintPO(${po.id})" style="background:var(--pk-pale);color:var(--pk2);border:1px solid var(--pk);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">🖨️ طباعة</button>
+            <button onclick="deletePORec(${po.id})" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
+          </div>
+        </div>
+        <div style="font-size:.8rem;color:var(--muted)">🏪 ${po.supplier||'—'} ${po.supplier_phone?'| 📞 '+po.supplier_phone:''}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:4px">🛒 ${itemsSummary||'لا أصناف'}</div>
+        ${po.notes?`<div style="font-size:.75rem;color:#7a5000;margin-top:4px;background:var(--gd-pale);padding:3px 8px;border-radius:6px">📝 ${po.notes}</div>`:''}
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px">⚠️ خطأ في تحميل السجل</p>'; console.error(e); }
+}
+
+async function editPO(id) {
+  try {
+    const rows = await sbGet('purchase_orders', `id=eq.${id}&select=*`);
+    if (!rows.length) { toast('⚠️ لم يُعثر على الأمر'); return; }
+    const po = rows[0];
+    const items = (() => { try { return JSON.parse(po.items||'[]'); } catch { return []; } })();
+    // تبديل للـ sub-tab الجديد
+    swPoSubTab('new', document.getElementById('po-subtab-new'));
+    document.getElementById('po-edit-id').value = po.id;
+    document.getElementById('po-edit-label').textContent = `تعديل أمر شراء: ${po.po_number}`;
+    document.getElementById('po-supplier').value = po.supplier || '';
+    document.getElementById('po-supplier-phone').value = po.supplier_phone || '';
+    document.getElementById('po-number').value = po.po_number || '';
+    document.getElementById('po-number').dataset.serial = po.serial_number || '';
+    document.getElementById('po-date').value = po.date || '';
+    document.getElementById('po-notes').value = po.notes || '';
+    // مسح الصفوف وإعادة رسمها
+    document.getElementById('po-rows').innerHTML = '';
+    poRowCount = 0;
+    items.forEach(item => {
+      addPORow();
+      const rid = 'po-r' + poRowCount;
+      // البحث عن المنتج
+      const prod = PRODUCTS.find(p => p.name === item.name || (item.sku && p.sku === item.sku));
+      if (prod) {
+        const sel = document.getElementById(rid+'-sel');
+        if (sel) { sel.value = prod.id; onPOProdSelect(rid); }
+      } else {
+        const nameInp = document.getElementById(rid+'-name');
+        if (nameInp) nameInp.value = item.name || '';
+      }
+      const qtyEl  = document.getElementById(rid+'-qty');
+      const prcEl  = document.getElementById(rid+'-price');
+      const skuEl  = document.getElementById(rid+'-sku');
+      if (qtyEl) qtyEl.value = item.qty || 1;
+      if (prcEl) prcEl.value = item.price || '';
+      if (skuEl && item.sku) skuEl.value = item.sku;
+      calcPORow(rid);
+    });
+    toast('✏️ تم تحميل الأمر للتعديل');
+  } catch(e) { toast('⚠️ خطأ في تحميل الأمر'); console.error(e); }
+}
+
+async function reprintPO(id) {
+  try {
+    const rows = await sbGet('purchase_orders', `id=eq.${id}&select=*`);
+    if (!rows.length) { toast('⚠️ لم يُعثر على الأمر'); return; }
+    const po = rows[0];
+    const items = (() => { try { return JSON.parse(po.items||'[]'); } catch { return []; } })();
+    const d = { number: po.po_number, date: po.date, supplier: po.supplier, supplierPhone: po.supplier_phone, notes: po.notes, rows: items, subtotal: po.total || 0 };
+    _doPrintPO(d);
+  } catch(e) { toast('⚠️ خطأ في الطباعة'); }
+}
+
+async function deletePORec(id) {
+  if (!confirm('حذف هذا الأمر نهائياً؟')) return;
+  try { await sbDelete('purchase_orders', id); toast('تم الحذف'); loadPOList(); } catch(e) { toast('⚠️ خطأ في الحذف'); }
+}
+
+// سجل فواتير البيع
+async function loadInvList() {
+  const el = document.getElementById('inv-list-body');
+  el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">⏳ جارٍ التحميل...</p>';
+  try {
+    const list = await sbGet('sales_invoices', 'order=created_at.desc&select=*');
+    if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">لا توجد فواتير بعد</p>'; return; }
+    el.innerHTML = list.map(inv => {
+      const items = (() => { try { return JSON.parse(inv.items||'[]'); } catch { return []; } })();
+      const d = new Date(inv.created_at).toLocaleDateString('ar-EG');
+      const itemsSummary = items.slice(0,3).map(i=>`${i.name} ×${i.qty}`).join(' · ') + (items.length>3?` · و${items.length-3} أخرى`:'');
+      return `<div style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1.5px solid var(--border);box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+          <div>
+            <span style="font-weight:800;color:var(--deep)">${inv.inv_number}</span>
+            <span style="font-size:.75rem;color:var(--muted);margin-right:10px">🕐 ${d}</span>
+            <span style="font-size:.72rem;background:var(--gd-pale);color:#7a5000;border-radius:8px;padding:1px 8px;font-weight:700">${inv.payment_method||''}</span>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="font-weight:700;color:var(--pk);font-size:.95rem">${(inv.total||0).toFixed(2)} ج.م</span>
+            <button onclick="editInv(${inv.id})" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
+            <button onclick="reprintInv(${inv.id})" style="background:var(--pk-pale);color:var(--pk2);border:1px solid var(--pk);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">🖨️ طباعة</button>
+            <button onclick="deleteInvRec(${inv.id})" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
+          </div>
+        </div>
+        <div style="font-size:.8rem;color:var(--muted)">👤 ${inv.client||'—'} ${inv.client_phone?'| 📞 '+inv.client_phone:''}</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:4px">🛍 ${itemsSummary||'لا أصناف'}</div>
+        ${inv.notes?`<div style="font-size:.75rem;color:#7a5000;margin-top:4px;background:var(--gd-pale);padding:3px 8px;border-radius:6px">📝 ${inv.notes}</div>`:''}
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px">⚠️ خطأ في تحميل السجل</p>'; console.error(e); }
+}
+
+async function editInv(id) {
+  try {
+    const rows = await sbGet('sales_invoices', `id=eq.${id}&select=*`);
+    if (!rows.length) { toast('⚠️ لم تُعثر على الفاتورة'); return; }
+    const inv = rows[0];
+    const items = (() => { try { return JSON.parse(inv.items||'[]'); } catch { return []; } })();
+    swInvSubTab('new', document.getElementById('inv-subtab-new'));
+    document.getElementById('inv-edit-id').value = inv.id;
+    document.getElementById('inv-edit-label').textContent = `تعديل فاتورة: ${inv.inv_number}`;
+    document.getElementById('inv-client').value = inv.client || '';
+    document.getElementById('inv-client-phone').value = inv.client_phone || '';
+    document.getElementById('inv-client-address').value = inv.client_address || '';
+    document.getElementById('inv-number').value = inv.inv_number || '';
+    document.getElementById('inv-number').dataset.serial = inv.serial_number || '';
+    document.getElementById('inv-date').value = inv.date || '';
+    document.getElementById('inv-payment').value = inv.payment_method || 'كاش';
+    document.getElementById('inv-notes').value = inv.notes || '';
+    document.getElementById('inv-rows').innerHTML = '';
+    invRowCount = 0;
+    items.forEach(item => {
+      addInvRow();
+      const rid = 'inv-r' + invRowCount;
+      const prod = PRODUCTS.find(p => p.name === item.name);
+      if (prod) {
+        const sel = document.getElementById(rid+'-sel');
+        if (sel) { sel.value = prod.id; onInvProdSelect(rid); }
+      } else {
+        const nameInp = document.getElementById(rid+'-name');
+        if (nameInp) nameInp.value = item.name || '';
+      }
+      const qtyEl  = document.getElementById(rid+'-qty');
+      const prcEl  = document.getElementById(rid+'-price');
+      const discEl = document.getElementById(rid+'-disc');
+      if (qtyEl) qtyEl.value = item.qty || 1;
+      if (prcEl) prcEl.value = item.price || '';
+      if (discEl) discEl.value = item.disc || 0;
+      calcInvRow(rid);
+    });
+    toast('✏️ تم تحميل الفاتورة للتعديل');
+  } catch(e) { toast('⚠️ خطأ في تحميل الفاتورة'); console.error(e); }
+}
+
+async function reprintInv(id) {
+  try {
+    const rows = await sbGet('sales_invoices', `id=eq.${id}&select=*`);
+    if (!rows.length) return;
+    const inv = rows[0];
+    const items = (() => { try { return JSON.parse(inv.items||'[]'); } catch { return []; } })();
+    const d = {
+      client: inv.client, clientPhone: inv.client_phone, clientAddress: inv.client_address,
+      number: inv.inv_number, date: inv.date, payment: inv.payment_method, notes: inv.notes,
+      rows: items, sub: inv.subtotal||0, discAmt: inv.discount_total||0, net: inv.total||0
+    };
+    _doPrintInv(d);
+  } catch(e) { toast('⚠️ خطأ في الطباعة'); }
+}
+
+async function deleteInvRec(id) {
+  if (!confirm('حذف هذه الفاتورة نهائياً؟')) return;
+  try { await sbDelete('sales_invoices', id); toast('تم الحذف'); loadInvList(); } catch(e) { toast('⚠️ خطأ في الحذف'); }
+}
+
+async function initPORows() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('po-date').value = today;
+  // جلب آخر رقم مسلسل من قاعدة البيانات
+  try {
+    const last = await sbGet('purchase_orders', 'select=serial_number&order=serial_number.desc&limit=1');
+    const nextSerial = last.length ? (last[0].serial_number + 1) : 1;
+    document.getElementById('po-number').value = 'PO-' + String(nextSerial).padStart(4, '0');
+    document.getElementById('po-number').dataset.serial = nextSerial;
+  } catch(e) {
+    const num = 'PO-' + String(Date.now()).slice(-4);
+    document.getElementById('po-number').value = num;
+  }
+  document.getElementById('po-rows').innerHTML = '';
+  poRowCount = 0;
+  addPORow(); addPORow();
+}
+
+function addPORow() {
+  poRowCount++;
+  const rid = 'po-r' + poRowCount;
+  // بناء قائمة المنتجات مع الكود
+  const opts = `<option value="">— اختر منتج أو اكتب يدوياً —</option>` +
+    PRODUCTS.map(p => {
+      const skuLabel = p.sku ? ` [${p.sku}]` : '';
+      const costLabel = p.cost ? ` (تكلفة: ${p.cost} ج.م)` : '';
+      const stockLabel = p.stock_qty != null ? ` ← متاح: ${p.stock_qty}` : '';
+      return `<option value="${p.id}" data-name="${p.name}" data-cost="${p.cost||''}" data-sku="${p.sku||''}" data-stock="${p.stock_qty??''}">${p.sku?'['+p.sku+'] ':''}${p.name}${costLabel}${stockLabel}</option>`;
+    }).join('');
+
+  const tr = document.createElement('tr');
+  tr.id = rid;
+  tr.style.cssText = 'border-bottom:1px solid var(--border2)';
+  tr.innerHTML = `
+    <td style="padding:6px 6px;min-width:200px">
+      <div style="display:flex;gap:4px;margin-bottom:4px">
+        <input id="${rid}-sku" placeholder="🏷 أدخل الكود (SKU)..." 
+          style="width:110px;border:1.5px solid var(--gd);border-radius:8px;padding:5px 8px;font-size:.78rem;outline:none;font-family:'Tajawal',sans-serif;background:var(--gd-pale);color:#7a5000;font-weight:700"
+          oninput="onPOSkuInput('${rid}')" title="أدخل كود المنتج مباشرة">
+        <span style="font-size:.7rem;color:var(--muted);margin:auto 0">أو</span>
+      </div>
+      <select id="${rid}-sel" onchange="onPOProdSelect('${rid}')"
+        style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:.82rem;outline:none;font-family:'Tajawal',sans-serif;color:var(--deep);background:#fff;margin-bottom:4px">
+        ${opts}
+      </select>
+      <input id="${rid}-name" placeholder="أو اكتب اسم صنف آخر..." 
+        style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:5px 8px;font-size:.8rem;outline:none;font-family:'Tajawal',sans-serif;color:var(--muted);background:#fdf4f8" 
+        title="اسم بديل / مخصص">
+    </td>
+    <td style="padding:6px 4px;text-align:center">
+      <input type="number" id="${rid}-qty" min="1" value="1" oninput="calcPORow('${rid}')"
+        style="width:60px;border:1.5px solid var(--border);border-radius:8px;padding:6px 6px;font-size:.83rem;text-align:center;outline:none">
+      <div id="${rid}-stock-hint" style="font-size:.62rem;color:var(--muted);margin-top:2px"></div>
+    </td>
+    <td style="padding:6px 4px;text-align:center">
+      <input type="number" id="${rid}-price" min="0" placeholder="0" oninput="calcPORow('${rid}')"
+        style="width:80px;border:1.5px solid var(--border);border-radius:8px;padding:6px 6px;font-size:.83rem;text-align:center;outline:none">
+      <div id="${rid}-price-hint" style="font-size:.65rem;color:var(--muted);margin-top:2px;text-align:center"></div>
+    </td>
+    <td style="padding:6px 4px;text-align:center;font-weight:700;color:var(--pk)" id="${rid}-total">0</td>
+    <td style="padding:6px 4px;text-align:center">
+      <button onclick="removePORow('${rid}')" style="background:var(--danger);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.75rem;cursor:pointer">✕</button>
+    </td>`;
+  document.getElementById('po-rows').appendChild(tr);
+}
+
+function onPOSkuInput(rid) {
+  const skuInp = document.getElementById(rid + '-sku');
+  const sku = skuInp.value.trim().toUpperCase();
+  if (!sku) return;
+  // البحث عن المنتج بالكود
+  const match = PRODUCTS.find(p => p.sku && p.sku.toUpperCase() === sku);
+  if (match) {
+    // تحديد المنتج في القايمة
+    const sel = document.getElementById(rid + '-sel');
+    for (let opt of sel.options) {
+      if (parseInt(opt.value) === match.id) { sel.value = match.id; break; }
+    }
+    onPOProdSelect(rid);
+    skuInp.style.borderColor = 'var(--success)';
+    skuInp.style.background = '#d4edda';
+  } else {
+    skuInp.style.borderColor = sku.length > 1 ? 'var(--danger)' : 'var(--gd)';
+    skuInp.style.background = sku.length > 1 ? '#f8d7da' : 'var(--gd-pale)';
+  }
+}
+
+function onPOProdSelect(rid) {
+  const sel = document.getElementById(rid + '-sel');
+  const priceInp = document.getElementById(rid + '-price');
+  const hint = document.getElementById(rid + '-price-hint');
+  const nameInp = document.getElementById(rid + '-name');
+  const stockHint = document.getElementById(rid + '-stock-hint');
+  const skuInp = document.getElementById(rid + '-sku');
+  const selOpt = sel.options[sel.selectedIndex];
+  if (!sel.value) { if(hint) hint.textContent = ''; return; }
+  const cost = selOpt.dataset.cost;
+  const stock = selOpt.dataset.stock;
+  const sku = selOpt.dataset.sku;
+  if (cost) {
+    priceInp.value = cost;
+    hint.innerHTML = `<span style="color:var(--success)">✓ سعر الشراء من القاعدة</span>`;
+  } else {
+    priceInp.value = '';
+    hint.innerHTML = `<span style="color:var(--muted)">لا يوجد سعر شراء — أدخله يدوياً</span>`;
+  }
+  // إظهار الكمية المتاحة
+  if (stockHint) {
+    if (stock !== '' && stock !== null && stock !== undefined) {
+      const qty = parseInt(stock);
+      const color = qty > 5 ? '#155724' : qty > 0 ? '#856404' : '#721c24';
+      stockHint.innerHTML = `<span style="color:${color}">📦 متاح: ${qty}</span>`;
+    } else {
+      stockHint.innerHTML = '';
+    }
+  }
+  // مزامنة حقل الكود
+  if (skuInp && sku) {
+    skuInp.value = sku;
+    skuInp.style.borderColor = 'var(--success)';
+    skuInp.style.background = '#d4edda';
+  }
+  nameInp.value = ''; // مسح الاسم اليدوي لو اتاختار من القايمة
+  calcPORow(rid);
+}
+
+function removePORow(rid) {
+  document.getElementById(rid)?.remove();
+  calcPOTotal();
+}
+
+function calcPORow(rid) {
+  const qty   = parseFloat(document.getElementById(rid+'-qty')?.value)   || 0;
+  const price = parseFloat(document.getElementById(rid+'-price')?.value) || 0;
+  const total = qty * price;
+  const el = document.getElementById(rid + '-total');
+  if (el) el.textContent = total.toFixed(2);
+  calcPOTotal();
+}
+
+function calcPOTotal() {
+  let sum = 0;
+  document.querySelectorAll('#po-rows tr').forEach(tr => {
+    const t = parseFloat(tr.querySelector('[id$="-total"]')?.textContent) || 0;
+    sum += t;
+  });
+  document.getElementById('po-total').textContent = sum.toFixed(2) + ' ج.م';
+}
+
+function getPOData() {
+  const rows = [];
+  let subtotal = 0;
+  document.querySelectorAll('#po-rows tr').forEach(tr => {
+    const rid = tr.id;
+    // اسم المنتج: من الـ select لو اتاختر، وإلا من الـ input اليدوي
+    const sel = document.getElementById(rid+'-sel');
+    const nameInp = document.getElementById(rid+'-name');
+    const skuInp = document.getElementById(rid+'-sku');
+    let name = '';
+    let sku = skuInp ? skuInp.value.trim() : '';
+    if (sel && sel.value) {
+      name = sel.options[sel.selectedIndex]?.dataset?.name || sel.options[sel.selectedIndex]?.text || '';
+      // إزالة الـ label الزيادة
+      name = name.replace(/\s*\[.*?\]/, '').replace(/\s*\(تكلفة:.*\)/, '').replace(/\s*←.*/, '').trim();
+      if (!sku) sku = sel.options[sel.selectedIndex]?.dataset?.sku || '';
+    }
+    if (!name && nameInp) name = nameInp.value.trim();
+    const qty   = parseFloat(document.getElementById(rid+'-qty')?.value)   || 0;
+    const price = parseFloat(document.getElementById(rid+'-price')?.value) || 0;
+    if (!name && !qty && !price) return;
+    const total = qty * price;
+    subtotal += total;
+    rows.push({ name: name||'—', sku, qty, price, total });
+  });
+  return {
+    supplier: document.getElementById('po-supplier').value.trim() || '—',
+    supplierPhone: document.getElementById('po-supplier-phone').value.trim(),
+    number: document.getElementById('po-number').value.trim() || 'PO-XXX',
+    serial: parseInt(document.getElementById('po-number').dataset.serial) || null,
+    date: document.getElementById('po-date').value,
+    notes: document.getElementById('po-notes').value.trim(),
+    rows, subtotal
+  };
+}
+
+async function printPO() {
+  const d = getPOData();
+  if (!d.rows.length) { toast('⚠️ أضف أصناف أولاً'); return; }
+  await savePOOnly();
+  _doPrintPO(d);
+}
+
+function _doPrintPO(d) {
+  const brandName = SETTINGS.brand_name || 'October Rose 6';
+  const phone = SETTINGS.phone || '';
+  const logo = SETTINGS.logo_url ? `<img src="${SETTINGS.logo_url}" style="height:70px;object-fit:contain;border-radius:50%">` : `<div style="font-size:2.5rem">🌸</div>`;
+  const rowsHtml = d.rows.map((r,i) => `
+    <tr style="background:${i%2===0?'#fff':'#fdf4f8'}">
+      <td style="padding:9px 12px;border-bottom:1px solid #f0e0ea">${r.sku?`<span style="font-size:.68rem;background:#fdf5d9;border:1px solid #d4a017;border-radius:6px;padding:1px 6px;font-weight:700;color:#7a5000;margin-left:6px">${r.sku}</span>`:''}${r.name}</td>
+      <td style="padding:9px 12px;text-align:center;border-bottom:1px solid #f0e0ea">${r.qty}</td>
+      <td style="padding:9px 12px;text-align:center;border-bottom:1px solid #f0e0ea">${r.price.toFixed(2)}</td>
+      <td style="padding:9px 12px;text-align:center;border-bottom:1px solid #f0e0ea;font-weight:700;color:#c0246e">${r.total.toFixed(2)}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+    <title>أمر شراء ${d.number}</title>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box;}
+      body{font-family:'Tajawal',Arial,sans-serif;background:#fff;color:#1a0b10;padding:30px;direction:rtl;}
+      @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap');
+      .doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #e84d8a;}
+      .doc-title{font-size:1.8rem;font-weight:800;color:#1a0b10;margin-bottom:4px;}
+      .doc-sub{font-size:.85rem;color:#7a5a6a;}
+      .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;background:#fde8f1;border-radius:12px;padding:16px;}
+      .meta-item label{display:block;font-size:.72rem;color:#7a5a6a;font-weight:700;margin-bottom:3px;}
+      .meta-item span{font-weight:700;font-size:.9rem;color:#1a0b10;}
+      table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+      thead tr{background:#1a0b10;color:#d4a017;}
+      th{padding:10px 12px;text-align:right;font-size:.85rem;}
+      .total-row{background:#fde8f1;font-weight:800;font-size:1rem;}
+      .total-row td{padding:12px;}
+      .notes-box{background:#fdf5d9;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:.85rem;color:#6b4c00;}
+      .footer-sig{display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:1px solid #ecd4e0;}
+      .sig-box{text-align:center;width:200px;}
+      .sig-line{border-top:1px solid #1a0b10;margin-top:40px;margin-bottom:6px;}
+      .sig-lbl{font-size:.78rem;color:#7a5a6a;}
+      @media print{body{padding:15px;} button{display:none!important;}}
+    </style></head><body>
+    <div class="doc-header">
+      <div>${logo}<div style="margin-top:8px;font-weight:800;font-size:1.1rem">${brandName}</div><div style="font-size:.78rem;color:#7a5a6a">${phone}</div></div>
+      <div style="text-align:left">
+        <div class="doc-title">📦 أمر شراء</div>
+        <div class="doc-sub">Purchase Order</div>
+        <div style="margin-top:10px;font-size:.9rem"><strong>رقم الأمر:</strong> ${d.number}</div>
+        <div style="font-size:.9rem"><strong>التاريخ:</strong> ${d.date}</div>
+      </div>
+    </div>
+    <div class="meta-grid">
+      <div class="meta-item"><label>اسم المورّد</label><span>${d.supplier}</span></div>
+      <div class="meta-item"><label>هاتف المورّد</label><span>${d.supplierPhone||'—'}</span></div>
+      <div class="meta-item"><label>رقم الأمر</label><span>${d.number}</span></div>
+      <div class="meta-item"><label>تاريخ الأمر</label><span>${d.date}</span></div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>المنتج / الصنف</th><th style="text-align:center">الكمية</th>
+        <th style="text-align:center">سعر الوحدة (ج.م)</th><th style="text-align:center">الإجمالي (ج.م)</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+      <tfoot><tr class="total-row">
+        <td colspan="3">الإجمالي الكلي</td>
+        <td style="text-align:center;color:#c0246e;font-size:1.1rem">${d.subtotal.toFixed(2)} ج.م</td>
+      </tr></tfoot>
+    </table>
+    ${d.notes?`<div class="notes-box">📝 <strong>ملاحظات / شروط الدفع:</strong> ${d.notes}</div>`:''}
+    <div class="footer-sig">
+      <div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">توقيع المورّد</div></div>
+      <div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">توقيع المدير المفوّض</div></div>
+    </div>
+    <script>window.onload=()=>window.print();<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ══════════════════════════════════════
+// SALES INVOICE — فاتورة بيع
+// ══════════════════════════════════════
+let invRowCount = 0;
+
+async function initInvRows() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('inv-date').value = today;
+  // جلب آخر رقم مسلسل من قاعدة البيانات
+  try {
+    const last = await sbGet('sales_invoices', 'select=serial_number&order=serial_number.desc&limit=1');
+    const nextSerial = last.length ? (last[0].serial_number + 1) : 1;
+    document.getElementById('inv-number').value = 'INV-' + String(nextSerial).padStart(4, '0');
+    document.getElementById('inv-number').dataset.serial = nextSerial;
+  } catch(e) {
+    const num = 'INV-' + String(Date.now()).slice(-4);
+    document.getElementById('inv-number').value = num;
+  }
+  document.getElementById('inv-rows').innerHTML = '';
+  invRowCount = 0;
+  addInvRow(); addInvRow();
+}
+
+function addInvRow() {
+  invRowCount++;
+  const rid = 'inv-r' + invRowCount;
+  const opts = `<option value="">— اختر منتج أو اكتب يدوياً —</option>` +
+    PRODUCTS.map(p => {
+      const priceLabel = p.price ? ` (${p.price} ج.م)` : '';
+      return `<option value="${p.id}" data-name="${p.name}" data-price="${p.price||''}">${p.name}${priceLabel}</option>`;
+    }).join('');
+
+  const tr = document.createElement('tr');
+  tr.id = rid;
+  tr.style.cssText = 'border-bottom:1px solid var(--border2)';
+  tr.innerHTML = `
+    <td style="padding:6px 6px;min-width:170px">
+      <select id="${rid}-sel" onchange="onInvProdSelect('${rid}')"
+        style="width:100%;border:1.5px solid var(--border);border-radius:8px;padding:6px 8px;font-size:.82rem;outline:none;font-family:'Tajawal',sans-serif;color:var(--deep);background:#fff;margin-bottom:4px">
+        ${opts}
+      </select>
+      <input id="${rid}-name" placeholder="أو اكتب اسم صنف آخر..."
+        style="width:100%;border:1.5px solid var(--border2);border-radius:8px;padding:5px 8px;font-size:.8rem;outline:none;font-family:'Tajawal',sans-serif;color:var(--muted);background:#fdf4f8"
+        title="اسم بديل / مخصص">
+    </td>
+    <td style="padding:6px 4px;text-align:center">
+      <input type="number" id="${rid}-qty" min="1" value="1" oninput="calcInvRow('${rid}')"
+        style="width:55px;border:1.5px solid var(--border);border-radius:8px;padding:6px 4px;font-size:.83rem;text-align:center;outline:none">
+    </td>
+    <td style="padding:6px 4px;text-align:center">
+      <input type="number" id="${rid}-price" min="0" placeholder="0" oninput="calcInvRow('${rid}')"
+        style="width:75px;border:1.5px solid var(--border);border-radius:8px;padding:6px 4px;font-size:.83rem;text-align:center;outline:none">
+      <div id="${rid}-price-hint" style="font-size:.65rem;color:var(--muted);margin-top:2px;text-align:center"></div>
+    </td>
+    <td style="padding:6px 4px;text-align:center">
+      <input type="number" id="${rid}-disc" min="0" max="100" value="0" oninput="calcInvRow('${rid}')"
+        style="width:55px;border:1.5px solid var(--border);border-radius:8px;padding:6px 4px;font-size:.83rem;text-align:center;outline:none">
+    </td>
+    <td style="padding:6px 4px;text-align:center;font-weight:700;color:var(--pk)" id="${rid}-total">0</td>
+    <td style="padding:6px 4px;text-align:center">
+      <button onclick="removeInvRow('${rid}')" style="background:var(--danger);color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:.75rem;cursor:pointer">✕</button>
+    </td>`;
+  document.getElementById('inv-rows').appendChild(tr);
+}
+
+function onInvProdSelect(rid) {
+  const sel   = document.getElementById(rid+'-sel');
+  const priceInp = document.getElementById(rid+'-price');
+  const hint  = document.getElementById(rid+'-price-hint');
+  const nameInp  = document.getElementById(rid+'-name');
+  if (!sel.value) { hint.textContent=''; return; }
+  const selOpt = sel.options[sel.selectedIndex];
+  const price  = selOpt.dataset.price;
+  if (price) {
+    priceInp.value = price;
+    hint.innerHTML = `<span style="color:var(--success)">✓ سعر البيع من القاعدة</span>`;
+  } else {
+    priceInp.value = '';
+    hint.innerHTML = `<span style="color:var(--muted)">لا يوجد سعر — أدخله يدوياً</span>`;
+  }
+  nameInp.value = '';
+  calcInvRow(rid);
+}
+
+function removeInvRow(rid) {
+  document.getElementById(rid)?.remove();
+  calcInvTotal();
+}
+
+function calcInvRow(rid) {
+  const qty   = parseFloat(document.getElementById(rid+'-qty')?.value)   || 0;
+  const price = parseFloat(document.getElementById(rid+'-price')?.value) || 0;
+  const disc  = parseFloat(document.getElementById(rid+'-disc')?.value)  || 0;
+  const total = qty * price * (1 - disc/100);
+  const el = document.getElementById(rid + '-total');
+  if (el) el.textContent = total.toFixed(2);
+  calcInvTotal();
+}
+
+function calcInvTotal() {
+  let sub = 0, discAmt = 0;
+  document.querySelectorAll('#inv-rows tr').forEach(tr => {
+    const rid = tr.id;
+    const qty   = parseFloat(document.getElementById(rid+'-qty')?.value)   || 0;
+    const price = parseFloat(document.getElementById(rid+'-price')?.value) || 0;
+    const disc  = parseFloat(document.getElementById(rid+'-disc')?.value)  || 0;
+    const gross = qty * price;
+    sub += gross;
+    discAmt += gross * (disc/100);
+  });
+  const net = sub - discAmt;
+  document.getElementById('inv-subtotal').textContent = sub.toFixed(2) + ' ج.م';
+  document.getElementById('inv-total').textContent = net.toFixed(2) + ' ج.م';
+  const discRow = document.getElementById('inv-disc-row');
+  if (discAmt > 0) {
+    discRow.style.display = '';
+    document.getElementById('inv-disc-total').textContent = discAmt.toFixed(2) + ' ج.م';
+  } else {
+    discRow.style.display = 'none';
+  }
+}
+
+function getInvData() {
+  const rows = [];
+  let sub = 0, discAmt = 0;
+  document.querySelectorAll('#inv-rows tr').forEach(tr => {
+    const rid = tr.id;
+    const sel = document.getElementById(rid+'-sel');
+    const nameInp = document.getElementById(rid+'-name');
+    let name = '';
+    if (sel && sel.value) {
+      name = sel.options[sel.selectedIndex]?.dataset?.name || '';
+      name = name.replace(/\s*\(.*\)/, '').trim();
+    }
+    if (!name && nameInp) name = nameInp.value.trim();
+    const qty   = parseFloat(document.getElementById(rid+'-qty')?.value)   || 0;
+    const price = parseFloat(document.getElementById(rid+'-price')?.value) || 0;
+    const disc  = parseFloat(document.getElementById(rid+'-disc')?.value)  || 0;
+    if (!name && !qty && !price) return;
+    const gross = qty * price;
+    const dAmt  = gross * (disc/100);
+    const total = gross - dAmt;
+    sub += gross; discAmt += dAmt;
+    rows.push({ name: name||'—', qty, price, disc, gross, dAmt, total });
+  });
+  return {
+    client:        document.getElementById('inv-client').value.trim() || '—',
+    clientPhone:   document.getElementById('inv-client-phone').value.trim(),
+    clientAddress: document.getElementById('inv-client-address')?.value.trim() || '',
+    number:        document.getElementById('inv-number').value.trim() || 'INV-XXX',
+    serial:        parseInt(document.getElementById('inv-number').dataset.serial) || null,
+    date:          document.getElementById('inv-date').value,
+    payment:       document.getElementById('inv-payment').value,
+    notes:         document.getElementById('inv-notes').value.trim(),
+    rows, sub, discAmt, net: sub - discAmt
+  };
+}
+
+async function printInvoice() {
+  const d = getInvData();
+  if (!d.rows.length) { toast('⚠️ أضف أصناف أولاً'); return; }
+  await saveInvOnly();
+  _doPrintInv(d);
+}
+
+function _doPrintInv(d) {
+  const brandName = SETTINGS.brand_name || 'October Rose 6';
+  const phone = SETTINGS.phone || '';
+  const addr = SETTINGS.address || '';
+  const logo = SETTINGS.logo_url ? `<img src="${SETTINGS.logo_url}" style="height:70px;object-fit:contain;border-radius:50%">` : `<div style="font-size:2.5rem">🌸</div>`;
+  const rowsHtml = d.rows.map((r,i) => `
+    <tr style="background:${i%2===0?'#fff':'#fdf4f8'}">
+      <td style="padding:9px 12px;border-bottom:1px solid #f0e0ea">${r.name}</td>
+      <td style="padding:9px 12px;text-align:center;border-bottom:1px solid #f0e0ea">${r.qty}</td>
+      <td style="padding:9px 12px;text-align:center;border-bottom:1px solid #f0e0ea">${r.price.toFixed(2)}</td>
+      <td style="padding:9px 12px;text-align:center;border-bottom:1px solid #f0e0ea">${r.disc>0?r.disc+'%':'—'}</td>
+      <td style="padding:9px 12px;text-align:center;border-bottom:1px solid #f0e0ea;font-weight:700;color:#c0246e">${r.total.toFixed(2)}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="UTF-8">
+    <title>فاتورة ${d.number}</title>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box;}
+      body{font-family:'Tajawal',Arial,sans-serif;background:#fff;color:#1a0b10;padding:30px;direction:rtl;}
+      @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;800&display=swap');
+      .doc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:30px;padding-bottom:20px;border-bottom:3px solid #e84d8a;}
+      .badge-paid{display:inline-block;background:#d4edda;color:#155724;border-radius:20px;padding:4px 14px;font-size:.78rem;font-weight:700;margin-top:8px;}
+      .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;background:#fde8f1;border-radius:12px;padding:16px;}
+      .meta-item label{display:block;font-size:.72rem;color:#7a5a6a;font-weight:700;margin-bottom:3px;}
+      .meta-item span{font-weight:700;font-size:.9rem;color:#1a0b10;}
+      table{width:100%;border-collapse:collapse;margin-bottom:20px;}
+      thead tr{background:#1a0b10;color:#d4a017;}
+      th{padding:10px 12px;text-align:right;font-size:.85rem;}
+      .total-section{background:#fdf4f8;border-radius:12px;padding:16px 20px;margin-bottom:20px;width:280px;margin-right:auto;}
+      .tot-row{display:flex;justify-content:space-between;padding:5px 0;font-size:.88rem;}
+      .tot-row.grand{border-top:2px solid #e84d8a;margin-top:8px;padding-top:10px;font-weight:800;font-size:1.1rem;color:#c0246e;}
+      .notes-box{background:#fdf5d9;border-radius:10px;padding:14px 16px;margin-bottom:20px;font-size:.85rem;color:#6b4c00;}
+      .footer-sig{display:flex;justify-content:space-between;margin-top:40px;padding-top:20px;border-top:1px solid #ecd4e0;}
+      .sig-box{text-align:center;width:200px;}
+      .sig-line{border-top:1px solid #1a0b10;margin-top:40px;margin-bottom:6px;}
+      .sig-lbl{font-size:.78rem;color:#7a5a6a;}
+      .watermark{text-align:center;margin-top:30px;font-size:.72rem;color:#c4a0b4;}
+      @media print{body{padding:15px;} button{display:none!important;}}
+    </style></head><body>
+    <div class="doc-header">
+      <div>${logo}<div style="margin-top:8px;font-weight:800;font-size:1.1rem">${brandName}</div>
+        <div style="font-size:.78rem;color:#7a5a6a">${phone}</div>
+        ${addr?`<div style="font-size:.78rem;color:#7a5a6a">${addr}</div>`:''}
+      </div>
+      <div style="text-align:left">
+        <div style="font-size:1.8rem;font-weight:800;color:#1a0b10">🧾 فاتورة بيع</div>
+        <div style="font-size:.85rem;color:#7a5a6a">Sales Invoice</div>
+        <div style="margin-top:10px;font-size:.9rem"><strong>رقم الفاتورة:</strong> ${d.number}</div>
+        <div style="font-size:.9rem"><strong>التاريخ:</strong> ${d.date}</div>
+        <div class="badge-paid">💳 ${d.payment}</div>
+      </div>
+    </div>
+    <div class="meta-grid">
+      <div class="meta-item"><label>اسم العميل</label><span>${d.client}</span></div>
+      <div class="meta-item"><label>هاتف العميل</label><span>${d.clientPhone||'—'}</span></div>
+      ${d.clientAddress?`<div class="meta-item" style="grid-column:1/-1"><label>📍 العنوان</label><span>${d.clientAddress}</span></div>`:''}
+      <div class="meta-item"><label>رقم الفاتورة</label><span>${d.number}</span></div>
+      <div class="meta-item"><label>طريقة الدفع</label><span>${d.payment}</span></div>
+    </div>
+    <table>
+      <thead><tr>
+        <th>المنتج / الصنف</th><th style="text-align:center">الكمية</th>
+        <th style="text-align:center">سعر الوحدة</th><th style="text-align:center">خصم</th>
+        <th style="text-align:center">الإجمالي (ج.م)</th>
+      </tr></thead>
+      <tbody>${rowsHtml}</tbody>
+    </table>
+    <div style="display:flex;justify-content:flex-end">
+      <div class="total-section">
+        <div class="tot-row"><span>المجموع قبل الخصم</span><span>${d.sub.toFixed(2)} ج.م</span></div>
+        ${d.discAmt>0?`<div class="tot-row" style="color:#e74c3c"><span>إجمالي الخصم</span><span>- ${d.discAmt.toFixed(2)} ج.م</span></div>`:''}
+        <div class="tot-row grand"><span>الإجمالي المستحق</span><span>${d.net.toFixed(2)} ج.م</span></div>
+      </div>
+    </div>
+    ${d.notes?`<div class="notes-box">📝 <strong>ملاحظات:</strong> ${d.notes}</div>`:''}
+    <div class="footer-sig">
+      <div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">توقيع العميل</div></div>
+      <div class="sig-box"><div class="sig-line"></div><div class="sig-lbl">توقيع البائع</div></div>
+    </div>
+    <div class="watermark">✦ شكراً لتعاملكم مع ${brandName} ✦</div>
+    <script>window.onload=()=>window.print();<\/script>
+  </body></html>`;
+
+  const w = window.open('', '_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// datalist للمنتجات
+function buildProdDatalist() {
+  ['po-prod-list','inv-prod-list'].forEach(id => {
+    let dl = document.getElementById(id);
+    if (!dl) { dl = document.createElement('datalist'); dl.id = id; document.body.appendChild(dl); }
+    dl.innerHTML = PRODUCTS.map(p=>`<option value="${p.name}">`).join('');
+  });
 }
 
 window.addEventListener('DOMContentLoaded', init);
