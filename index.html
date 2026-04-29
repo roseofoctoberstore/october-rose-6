@@ -183,6 +183,9 @@ body.staff-sales .p-hbtn.del-btn,body.manager .p-hbtn.del-btn{display:flex;}
 .p-old{font-size:.75rem;color:#bbb;text-decoration:line-through;display:block;}
 .p-add{background:var(--deep);color:var(--gd);border:none;padding:6px 13px;border-radius:20px;font-size:.78rem;font-weight:600;transition:.22s;}
 .p-add:hover{background:var(--pk);color:#fff;}
+.p-wa-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:8px;background:#25D366;color:#fff;border:none;padding:7px 10px;border-radius:20px;font-size:.78rem;font-weight:700;font-family:'Tajawal',sans-serif;transition:.22s;text-decoration:none;}
+.p-wa-btn:hover{background:#1ebe5d;transform:scale(1.02);}
+.p-wa-btn svg{width:15px;height:15px;flex-shrink:0;}
 .no-prods{grid-column:1/-1;text-align:center;padding:50px;color:var(--muted);}
 
 /* ── SKU / PRODUCT CODE ── */
@@ -1885,46 +1888,15 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
               <!-- Col 1: Pricing & Stock -->
               <div style="padding:18px 20px;border-left:1px solid var(--border2)">
                 <h4 style="font-size:.78rem;color:var(--pk);font-weight:700;letter-spacing:1.5px;margin-bottom:12px;text-transform:uppercase">💰 التسعير والمخزون</h4>
-
-                <!-- View Mode -->
-                <div id="pc-view-prices">
-                  <div class="pc-row"><span class="pc-lbl">سعر البيع</span><span id="pc-price" class="pc-val pc-pink"></span></div>
-                  <div class="pc-row"><span class="pc-lbl">سعر قبل الخصم</span><span id="pc-old" class="pc-val"></span></div>
-                  <div class="pc-row"><span class="pc-lbl">نسبة الخصم</span><span id="pc-disc" class="pc-val pc-gold"></span></div>
-                  <div class="pc-row"><span class="pc-lbl">سعر الشراء</span><span id="pc-cost" class="pc-val"></span></div>
-                  <div class="pc-row"><span class="pc-lbl">هامش الربح</span><span id="pc-profit" class="pc-val pc-green"></span></div>
-                  <div class="pc-row"><span class="pc-lbl">نسبة الربح</span><span id="pc-profit-pct" class="pc-val pc-green"></span></div>
-                  <div class="pc-row" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)"><span class="pc-lbl">الكمية الحالية</span><span id="pc-qty" class="pc-val" style="font-size:1.1rem;font-weight:800"></span></div>
-                  <div class="pc-row"><span class="pc-lbl">الحالة</span><span id="pc-status" class="pc-val"></span></div>
-                  <div class="pc-row"><span class="pc-lbl">العربون</span><span id="pc-deposit" class="pc-val"></span></div>
-                  <button onclick="pcToggleEditPrices()" style="margin-top:12px;width:100%;background:linear-gradient(135deg,var(--pk),var(--pk2));color:#fff;border:none;border-radius:12px;padding:8px 0;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif">✏️ تعديل الأسعار والكمية</button>
-                </div>
-
-                <!-- Edit Mode -->
-                <div id="pc-edit-prices" style="display:none">
-                  <div style="display:flex;flex-direction:column;gap:8px">
-                    <label style="font-size:.75rem;font-weight:700;color:var(--muted)">سعر البيع (ج.م)</label>
-                    <input id="pc-inp-price" type="number" min="0" step="0.5" oninput="pcProfitPreview()" style="border:2px solid var(--pk);border-radius:10px;padding:7px 12px;font-size:.9rem;font-family:'Tajawal',sans-serif;outline:none;width:100%;color:var(--deep)">
-                    <label style="font-size:.75rem;font-weight:700;color:var(--muted)">سعر قبل الخصم (ج.م)</label>
-                    <input id="pc-inp-old" type="number" min="0" step="0.5" oninput="pcProfitPreview()" style="border:2px solid var(--border);border-radius:10px;padding:7px 12px;font-size:.9rem;font-family:'Tajawal',sans-serif;outline:none;width:100%;color:var(--deep)" onfocus="this.style.borderColor='var(--pk)'" onblur="this.style.borderColor='var(--border)'">
-                    <label style="font-size:.75rem;font-weight:700;color:var(--muted)">سعر الشراء / التكلفة (ج.م)</label>
-                    <input id="pc-inp-cost" type="number" min="0" step="0.5" oninput="pcProfitPreview()" style="border:2px solid var(--border);border-radius:10px;padding:7px 12px;font-size:.9rem;font-family:'Tajawal',sans-serif;outline:none;width:100%;color:var(--deep)" onfocus="this.style.borderColor='var(--pk)'" onblur="this.style.borderColor='var(--border)'">
-                    <label style="font-size:.75rem;font-weight:700;color:var(--muted)">العربون (ج.م)</label>
-                    <input id="pc-inp-deposit" type="number" min="0" step="0.5" style="border:2px solid var(--border);border-radius:10px;padding:7px 12px;font-size:.9rem;font-family:'Tajawal',sans-serif;outline:none;width:100%;color:var(--deep)" onfocus="this.style.borderColor='var(--pk)'" onblur="this.style.borderColor='var(--border)'">
-                    <label style="font-size:.75rem;font-weight:700;color:var(--muted)">الكمية في المخزون</label>
-                    <input id="pc-inp-qty" type="number" min="0" step="1" style="border:2px solid var(--border);border-radius:10px;padding:7px 12px;font-size:.9rem;font-family:'Tajawal',sans-serif;outline:none;width:100%;color:var(--deep)" onfocus="this.style.borderColor='var(--pk)'" onblur="this.style.borderColor='var(--border)'">
-                    <!-- Live profit preview -->
-                    <div id="pc-profit-preview" style="background:linear-gradient(135deg,#e8f8ee,#fff9e6);border:1px solid #a8d5b5;border-radius:10px;padding:8px 12px;font-size:.78rem;display:none">
-                      <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">هامش الربح:</span><span id="pc-prev-profit" style="color:#27ae60;font-weight:700"></span></div>
-                      <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--muted)">نسبة الربح:</span><span id="pc-prev-pct" style="color:#27ae60;font-weight:700"></span></div>
-                      <div style="display:flex;justify-content:space-between;margin-top:3px"><span style="color:var(--muted)">نسبة الخصم:</span><span id="pc-prev-disc" style="color:var(--gd2);font-weight:700"></span></div>
-                    </div>
-                    <div style="display:flex;gap:8px;margin-top:4px">
-                      <button onclick="pcSavePrices()" style="flex:1;background:linear-gradient(135deg,#27ae60,#1e8449);color:#fff;border:none;border-radius:12px;padding:9px 0;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif">💾 حفظ في قاعدة البيانات</button>
-                      <button onclick="pcToggleEditPrices()" style="background:var(--pk-pale);color:var(--pk);border:1.5px solid var(--pk);border-radius:12px;padding:9px 14px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif">✕</button>
-                    </div>
-                  </div>
-                </div>
+                <div class="pc-row"><span class="pc-lbl">سعر البيع</span><span id="pc-price" class="pc-val pc-pink"></span></div>
+                <div class="pc-row"><span class="pc-lbl">سعر قبل الخصم</span><span id="pc-old" class="pc-val"></span></div>
+                <div class="pc-row"><span class="pc-lbl">نسبة الخصم</span><span id="pc-disc" class="pc-val pc-gold"></span></div>
+                <div class="pc-row"><span class="pc-lbl">سعر الشراء</span><span id="pc-cost" class="pc-val"></span></div>
+                <div class="pc-row"><span class="pc-lbl">هامش الربح</span><span id="pc-profit" class="pc-val pc-green"></span></div>
+                <div class="pc-row"><span class="pc-lbl">نسبة الربح</span><span id="pc-profit-pct" class="pc-val pc-green"></span></div>
+                <div class="pc-row" style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)"><span class="pc-lbl">الكمية الحالية</span><span id="pc-qty" class="pc-val" style="font-size:1.1rem;font-weight:800"></span></div>
+                <div class="pc-row"><span class="pc-lbl">الحالة</span><span id="pc-status" class="pc-val"></span></div>
+                <div class="pc-row"><span class="pc-lbl">العربون</span><span id="pc-deposit" class="pc-val"></span></div>
               </div>
 
               <!-- Col 2: Details -->
@@ -2721,15 +2693,15 @@ function renderProds(filter = 'all') {
   if (!list.length) { g.innerHTML = '<p class="no-prods">لا توجد منتجات في هذه الفئة حتى الآن</p>'; return; }
 
   g.innerHTML = list.map(p => `
-    <div class="prod-card ${p.in_stock===false?'out-of-stock':''}" onclick="openDetail('${p.id}')">
+    <div class="prod-card ${p.in_stock===false?'out-of-stock':''}" onclick="openDetail(${p.id})">
       ${p.badge ? `<span class="p-badge bg-${p.badge}">${bdgLabel(p.badge)}</span>` : ''}
       <span class="stock-tag ${p.in_stock===false?'tag-out':'tag-in'}">${p.in_stock===false?'نفذت الكمية ❌':'متاح ✅'}</span>
       <div class="p-img-wrap">
         ${p.img_data ? `<img src="${p.img_data}" alt="${p.name}" loading="lazy" decoding="async">` : `<div class="p-emoji">${p.emoji||'🧴'}</div>`}
         <div class="p-hover-btns">
-          <button class="p-hbtn" onclick="ev(event);addCart('${p.id}')" title="أضفي للسلة" ${p.in_stock===false?'disabled style="opacity:.4;cursor:not-allowed"':''}>🛒</button>
-          ${canEdit ? `<button class="p-hbtn del-btn" onclick="ev(event);delProd('${p.id}')">🗑</button>` : ''}
-          ${canEdit ? `<button class="p-hbtn stock-btn" onclick="ev(event);toggleStock('${p.id}')" title="${p.in_stock===false?'تفعيل':'إيقاف'}" style="background:${p.in_stock===false?'#27ae60':'#e67e22'};color:#fff">${p.in_stock===false?'✅':'⚠️'}</button>` : ''}
+          <button class="p-hbtn" onclick="ev(event);addCart(${p.id})" title="أضفي للسلة" ${p.in_stock===false?'disabled style="opacity:.4;cursor:not-allowed"':''}>🛒</button>
+          ${canEdit ? `<button class="p-hbtn del-btn" onclick="ev(event);delProd(${p.id})">🗑</button>` : ''}
+          ${canEdit ? `<button class="p-hbtn stock-btn" onclick="ev(event);toggleStock(${p.id})" title="${p.in_stock===false?'تفعيل':'إيقاف'}" style="background:${p.in_stock===false?'#27ae60':'#e67e22'};color:#fff">${p.in_stock===false?'✅':'⚠️'}</button>` : ''}
         </div>
       </div>
       <div class="p-body">
@@ -2742,15 +2714,27 @@ function renderProds(filter = 'all') {
             ${p.old_price ? `<span class="p-old">${p.old_price} ج.م</span>` : ''}
             ${p.price_tbd ? `<span style="color:var(--pk);font-size:.82rem;font-weight:700">📞 اتصلي للسعر</span>` : `${p.price||''} ج.م`}
           </div>
-          <button class="p-add" onclick="ev(event);addCart('${p.id}')" ${p.in_stock===false?'disabled style="opacity:.4;background:#ccc;cursor:not-allowed"':''}>
+          <button class="p-add" onclick="ev(event);addCart(${p.id})" ${p.in_stock===false?'disabled style="opacity:.4;background:#ccc;cursor:not-allowed"':''}>
             ${p.in_stock===false?'نفذت الكمية':'+ السلة'}
           </button>
         </div>
         ${renderStars(p)}
+        <a class="p-wa-btn" href="#" onclick="ev(event);openWaOrder(${p.id})" title="اطلب عبر واتساب">
+          <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.114.553 4.1 1.523 5.828L.057 23.5l5.846-1.533A11.948 11.948 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.818 9.818 0 01-5.007-1.371l-.359-.214-3.721.976.993-3.622-.234-.372A9.818 9.818 0 1112 21.818z"/></svg>
+          اطلب عبر واتساب
+        </a>
       </div>
     </div>`).join('');
 }
 function ev(e) { e.stopPropagation(); }
+function openWaOrder(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  if (!p) return;
+  const waNum = (SETTINGS.whatsapp || '201000000000').replace(/\D/g,'');
+  const price = p.price_tbd ? 'يرجى التواصل للسعر' : (p.price ? p.price + ' ج.م' : '');
+  const msg = `مرحباً 🌸 أنا مهتم بـ:\n\n📦 ${p.name}${p.sku ? '\n🏷 كود: ' + p.sku : ''}${price ? '\n💰 السعر: ' + price : ''}\n\nأرجو التواصل لتأكيد الطلب ✅`;
+  window.open(`https://wa.me/${waNum}?text=${encodeURIComponent(msg)}`, '_blank');
+}
 
 function filterProds(f, btn) {
   curFilter = f;
@@ -2778,7 +2762,7 @@ async function delProd(id) {
   if (!confirm('حذف هذا المنتج؟')) return;
   try {
     await sbDelete('products', id);
-    PRODUCTS = PRODUCTS.filter(p => String(p.id) !== String(id));
+    PRODUCTS = PRODUCTS.filter(p => p.id !== id);
     saveLocal('products', PRODUCTS);
     renderProds(curFilter); renderCats();
     document.getElementById('stat-n').textContent = PRODUCTS.length;
@@ -2788,7 +2772,7 @@ async function delProd(id) {
 
 async function toggleStock(id) {
   if (!currentUser || !['manager','sales'].includes(currentUser.role)) return;
-  const p = PRODUCTS.find(x => String(x.id) === String(id));
+  const p = PRODUCTS.find(x => x.id === id);
   if (!p) return;
   const newStock = p.in_stock === false ? true : false;
   try {
@@ -2912,7 +2896,7 @@ function formatDesc(text) {
 }
 
 function openDetail(id) {
-  const p = PRODUCTS.find(x => String(x.id) === String(id));
+  const p = PRODUCTS.find(x => x.id === id);
   if (!p) return;
   openProdId = id;
 
@@ -3189,7 +3173,7 @@ async function toggleStockFromDetail() {
 
 // ══ RESERVATION / DEPOSIT ══
 function openReserveModal() {
-  const p = PRODUCTS.find(x => String(x.id) === String(openProdId));
+  const p = PRODUCTS.find(x => x.id === openProdId);
   if (!p || !p.deposit) return;
   document.getElementById('rsv-title').textContent = '🔒 حجز: ' + p.name;
   document.getElementById('rsv-desc').textContent =
@@ -3213,7 +3197,7 @@ async function submitReservation() {
     return; 
   }
   
-  const p = PRODUCTS.find(x => String(x.id) === String(openProdId));
+  const p = PRODUCTS.find(x => x.id === openProdId);
   if (!p) return;
 
   // Save reservation as special order in DB
@@ -3238,7 +3222,7 @@ async function submitReservation() {
 }
 
 function calcProfit() {
-  const p = PRODUCTS.find(x => String(x.id) === String(openProdId));
+  const p = PRODUCTS.find(x => x.id === openProdId);
   const price = p ? parseFloat(p.price) : 0;
   const cost = parseFloat(document.getElementById('d-cost')?.value) || 0;
   const profitVal = document.getElementById('profit-val');
@@ -3288,7 +3272,7 @@ async function saveDetail() {
   };
   try {
     await sbPatch('products', openProdId, updates);
-    const idx = PRODUCTS.findIndex(x => String(x.id) === String(openProdId));
+    const idx = PRODUCTS.findIndex(x => x.id === openProdId);
     if (idx !== -1) PRODUCTS[idx] = { ...PRODUCTS[idx], ...updates };
     saveLocal('products', PRODUCTS);
     renderProds(curFilter); renderCats();
@@ -3384,14 +3368,14 @@ async function saveNewProd() {
 // CART
 // ══════════════════════════════════════
 function addCart(id) {
-  const p = PRODUCTS.find(x => String(x.id) === String(id)); if (!p) return;
-  const ex = cart.find(x => String(x.id) === String(id));
+  const p = PRODUCTS.find(x => x.id === id); if (!p) return;
+  const ex = cart.find(x => x.id === id);
   if (ex) ex.qty++; else cart.push({...p, qty:1});
   updBdg(); toast(`✦ تمت إضافة "${p.name}"`);
 }
-function remFromCart(id) { cart = cart.filter(x => String(x.id) !== String(id)); updBdg(); renderCart(); }
+function remFromCart(id) { cart = cart.filter(x => x.id !== id); updBdg(); renderCart(); }
 function chQty(id, d) {
-  const i = cart.find(x => String(x.id) === String(id));
+  const i = cart.find(x => x.id === id);
   if (i) { i.qty += d; if (i.qty <= 0) remFromCart(id); else { updBdg(); renderCart(); } }
 }
 function updBdg() { document.getElementById('cart-bdg').textContent = cart.reduce((s,i) => s + i.qty, 0); }
@@ -3414,12 +3398,12 @@ function renderCart() {
         <div class="ci-c">${catName(i.cat)}</div>
         <div class="ci-p">${i.price * i.qty} ج.م</div>
         <div class="ci-qty-row">
-          <button class="q-btn" onclick="chQty('${i.id}',-1)">−</button>
+          <button class="q-btn" onclick="chQty(${i.id},-1)">−</button>
           <span class="q-n">${i.qty}</span>
-          <button class="q-btn" onclick="chQty('${i.id}',1)">+</button>
+          <button class="q-btn" onclick="chQty(${i.id},1)">+</button>
         </div>
       </div>
-      <button class="ci-rm" onclick="remFromCart('${i.id}')">🗑</button>
+      <button class="ci-rm" onclick="remFromCart(${i.id})">🗑</button>
     </div>`).join('');
   document.getElementById('cs-total').textContent = cart.reduce((s,i) => s + i.price*i.qty, 0) + ' ج.م';
 }
@@ -3536,7 +3520,7 @@ function renderOrdersBody(body, filterStatus='') {
         <span class="order-date">🕐 ${dateStr}</span>
         ${!canHideRevenue ? `<span class="order-total">${o.total} ج.م</span>` : ''}
         <select class="order-status ${statusCls(o.status)}" onchange="updateOrderStatus(${o.id},this.value,this)">${statusOpts}</select>
-        ${canDel ? `<button class="manager-del-order" onclick="delOrder('${o.id}')">🗑</button>` : ''}
+        ${canDel ? `<button class="manager-del-order" onclick="delOrder(${o.id})">🗑</button>` : ''}
       </div>
       <div style="display:flex;align-items:center;gap:4px;margin:6px 0">${tlHtml}</div>
       <div class="order-items">🛍 ${itemsHtml}${o.deposit?` | 🔒 عربون: ${o.deposit} ج.م`:''}</div>
@@ -3813,7 +3797,7 @@ function renderStaffList() {
         <div class="staff-role"><span class="role-badge ${roleClass[s.role]||'rb-orders'}">${roleMap[s.role]||s.role}</span></div>
         <div class="staff-email">@${s.username}</div>
       </div>
-      ${isManager ? `<button class="del-staff-btn" onclick="delStaff('${s.id}')">🗑 حذف</button>` : ''}
+      ${isManager ? `<button class="del-staff-btn" onclick="delStaff(${s.id})">🗑 حذف</button>` : ''}
     </div>`).join('');
 }
 function openAddStaff() { if(currentUser?.role==='manager') openMod('add-staff-modal'); }
@@ -3929,8 +3913,8 @@ async function loadUsersList() {
           <td style="padding:11px 14px;color:var(--muted);font-family:monospace">@${s.username}</td>
           <td style="padding:11px 14px;text-align:center"><span style="background:${roleColor[s.role]||'#666'}22;color:${roleColor[s.role]||'#666'};border:1px solid ${roleColor[s.role]||'#666'}44;border-radius:20px;padding:3px 12px;font-size:.75rem;font-weight:700">${roleMap[s.role]||s.role}</span></td>
           <td style="padding:11px 14px;text-align:center">
-            <button onclick="openEditUserModal('${s.id}')" style="background:rgba(212,160,23,.15);color:#7a5000;border:1px solid rgba(212,160,23,.4);border-radius:8px;padding:5px 12px;font-size:.75rem;cursor:pointer;margin-left:6px">✏️ تعديل</button>
-            <button onclick="deleteUser('${s.id}','${(s.name||s.username).replace(/'/g,'')}')" style="background:rgba(231,76,60,.1);color:#c0392b;border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:5px 12px;font-size:.75rem;cursor:pointer">🗑 حذف</button>
+            <button onclick="openEditUserModal(${s.id})" style="background:rgba(212,160,23,.15);color:#7a5000;border:1px solid rgba(212,160,23,.4);border-radius:8px;padding:5px 12px;font-size:.75rem;cursor:pointer;margin-left:6px">✏️ تعديل</button>
+            <button onclick="deleteUser(${s.id},'${(s.name||s.username).replace(/'/g,'')}')" style="background:rgba(231,76,60,.1);color:#c0392b;border:1px solid rgba(231,76,60,.3);border-radius:8px;padding:5px 12px;font-size:.75rem;cursor:pointer">🗑 حذف</button>
           </td>
         </tr>`).join('')}
       </tbody>
@@ -4358,123 +4342,6 @@ function swDashNav(id, navBtn) {
 // ══════════════════════════════════════
 let pcCurrentProduct = null;
 
-// ══ PRODUCT CARD — تعديل الأسعار والكمية ══
-function pcToggleEditPrices() {
-  const viewEl = document.getElementById('pc-view-prices');
-  const editEl = document.getElementById('pc-edit-prices');
-  const isEdit = editEl.style.display !== 'none';
-  if (isEdit) {
-    // back to view
-    editEl.style.display = 'none';
-    viewEl.style.display = 'block';
-  } else {
-    // fill inputs from current product
-    const p = pcCurrentProduct;
-    if (!p) return;
-    document.getElementById('pc-inp-price').value   = parseFloat(p.price)     || '';
-    document.getElementById('pc-inp-old').value     = parseFloat(p.old_price) || '';
-    document.getElementById('pc-inp-cost').value    = parseFloat(p.cost)      || '';
-    document.getElementById('pc-inp-deposit').value = parseFloat(p.deposit)   || '';
-    document.getElementById('pc-inp-qty').value     = p.stock_qty != null ? p.stock_qty : '';
-    editEl.style.display  = 'block';
-    viewEl.style.display  = 'none';
-    pcProfitPreview();
-  }
-}
-
-function pcProfitPreview() {
-  const sale = parseFloat(document.getElementById('pc-inp-price').value) || 0;
-  const old  = parseFloat(document.getElementById('pc-inp-old').value)   || 0;
-  const cost = parseFloat(document.getElementById('pc-inp-cost').value)  || 0;
-  const prev = document.getElementById('pc-profit-preview');
-  if (sale > 0 && cost > 0) {
-    const profitAmt = (sale - cost).toFixed(2);
-    const profitPct = ((sale - cost) / sale * 100).toFixed(1);
-    const discPct   = (old > sale && old > 0) ? ((old - sale) / old * 100).toFixed(0) + '%' : '—';
-    document.getElementById('pc-prev-profit').textContent = profitAmt + ' ج.م';
-    document.getElementById('pc-prev-pct').textContent    = profitPct + '%';
-    document.getElementById('pc-prev-disc').textContent   = discPct;
-    prev.style.display = 'block';
-  } else {
-    prev.style.display = 'none';
-  }
-}
-
-async function pcSavePrices() {
-  const p = pcCurrentProduct;
-  if (!p) return;
-  const newPrice   = parseFloat(document.getElementById('pc-inp-price').value);
-  const newOld     = parseFloat(document.getElementById('pc-inp-old').value);
-  const newCost    = parseFloat(document.getElementById('pc-inp-cost').value);
-  const newDeposit = parseFloat(document.getElementById('pc-inp-deposit').value);
-  const newQty     = parseInt(document.getElementById('pc-inp-qty').value);
-
-  if (isNaN(newPrice) || newPrice < 0) { toast('⚠️ سعر البيع غير صحيح'); return; }
-
-  const saveBtn = document.querySelector('#pc-edit-prices button[onclick="pcSavePrices()"]');
-  if (saveBtn) { saveBtn.textContent = '⏳ جارٍ الحفظ...'; saveBtn.disabled = true; }
-
-  const patchData = {};
-  if (!isNaN(newPrice))   patchData.price      = newPrice;
-  if (!isNaN(newOld))     patchData.old_price  = newOld;
-  if (!isNaN(newCost))    patchData.cost       = newCost;
-  if (!isNaN(newDeposit)) patchData.deposit    = newDeposit;
-  if (!isNaN(newQty))     { patchData.stock_qty = newQty; patchData.in_stock = newQty > 0; }
-
-  try {
-    await sbPatch('products', p.id, patchData);
-
-    // Update local product object
-    Object.assign(p, patchData);
-    // Update PRODUCTS array
-    const idx = PRODUCTS.findIndex(x => String(x.id) === String(p.id));
-    if (idx !== -1) Object.assign(PRODUCTS[idx], patchData);
-    saveLocal('products', PRODUCTS);
-
-    // Refresh displayed values
-    const salePrice = parseFloat(p.price) || 0;
-    const oldPrice  = parseFloat(p.old_price) || 0;
-    const cost      = parseFloat(p.cost) || 0;
-    const qty       = p.stock_qty ?? 0;
-    const disc      = (oldPrice > salePrice && oldPrice > 0) ? ((oldPrice - salePrice) / oldPrice * 100).toFixed(0) + '%' : '—';
-    const profitAmt = cost > 0 && salePrice > 0 ? (salePrice - cost).toFixed(2) + ' ج.م' : '—';
-    const profitPct = cost > 0 && salePrice > 0 ? (((salePrice - cost) / salePrice) * 100).toFixed(1) + '%' : '—';
-
-    document.getElementById('pc-price').textContent      = salePrice > 0 ? salePrice + ' ج.م' : '—';
-    document.getElementById('pc-old').textContent        = oldPrice  > 0 ? oldPrice  + ' ج.م' : '—';
-    document.getElementById('pc-disc').textContent       = disc;
-    document.getElementById('pc-cost').textContent       = cost > 0 ? cost + ' ج.م' : '—';
-    document.getElementById('pc-profit').textContent     = profitAmt;
-    document.getElementById('pc-profit-pct').textContent = profitPct;
-    document.getElementById('pc-qty').textContent        = qty + ' قطعة';
-    document.getElementById('pc-deposit').textContent    = p.deposit ? p.deposit + ' ج.م' : '—';
-    document.getElementById('pc-status').textContent     = qty === 0 ? '❌ نفد' : qty <= 3 ? '⚠️ منخفض' : '✅ متاح';
-    document.getElementById('pc-price-big').textContent  = salePrice > 0 ? salePrice + ' ج.م' : '—';
-    document.getElementById('pc-old-price').textContent  = oldPrice  > 0 ? oldPrice  + ' ج.م' : '';
-    const stockBadge = document.getElementById('pc-stock-badge');
-    stockBadge.textContent  = qty === 0 ? '❌ نفد المخزون' : qty <= 3 ? `⚠️ كمية منخفضة (${qty})` : `✅ متاح (${qty})`;
-    stockBadge.style.background = qty === 0 ? '#f8d7da' : qty <= 3 ? '#fff3cd' : '#d4edda';
-    stockBadge.style.color      = qty === 0 ? '#721c24' : qty <= 3 ? '#856404' : '#155724';
-    const discBadge = document.getElementById('pc-discount-badge');
-    if (disc !== '—') { discBadge.textContent = '🔥 خصم ' + disc; discBadge.style.color = '#e84d8a'; } else { discBadge.textContent = ''; }
-
-    // Refresh product grid too
-    renderProds(curFilter);
-
-    // Switch back to view mode
-    document.getElementById('pc-edit-prices').style.display = 'none';
-    document.getElementById('pc-view-prices').style.display = 'block';
-
-    toast('✅ تم حفظ التغييرات في قاعدة البيانات بنجاح 🌸');
-  } catch(e) {
-    console.error('pcSavePrices error:', e);
-    toast('⚠️ خطأ في الحفظ، تحقق من الاتصال');
-  } finally {
-    if (saveBtn) { saveBtn.textContent = '💾 حفظ في قاعدة البيانات'; saveBtn.disabled = false; }
-  }
-}
-
-
 function pcSearch() {
   const q = (document.getElementById('pc-search-inp').value || '').trim().toLowerCase();
   const resBox = document.getElementById('pc-results');
@@ -4518,7 +4385,7 @@ function pcClear() {
 }
 
 async function pcSelectProduct(id) {
-  const p = PRODUCTS.find(x => String(x.id) === String(id));
+  const p = PRODUCTS.find(x => x.id === id);
   if (!p) return;
   pcCurrentProduct = p;
   document.getElementById('pc-results').style.display = 'none';
@@ -4563,11 +4430,6 @@ async function pcSelectProduct(id) {
   document.getElementById('pc-qty').textContent = qty + ' قطعة';
   document.getElementById('pc-status').textContent = qty === 0 ? '❌ نفد' : qty <= 3 ? '⚠️ منخفض' : '✅ متاح';
   document.getElementById('pc-deposit').textContent = p.deposit ? p.deposit + ' ج.م' : '—';
-  const sqv = document.getElementById('pc-stock-qty-val'); if(sqv) sqv.textContent = (p.stock_qty != null ? p.stock_qty : '—') + ' قطعة';
-  // Reset edit mode when switching product
-  const editEl = document.getElementById('pc-edit-prices');
-  const viewEl = document.getElementById('pc-view-prices');
-  if(editEl && viewEl){ editEl.style.display='none'; viewEl.style.display='block'; }
   document.getElementById('pc-cat').textContent = catMap[p.cat] || p.cat;
   document.getElementById('pc-badge').textContent = badgeMap[p.badge] || p.badge || '—';
   document.getElementById('pc-date').textContent = p.created_at ? new Date(p.created_at).toLocaleDateString('ar-EG') : '—';
@@ -5203,9 +5065,9 @@ async function loadPOList() {
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <span style="font-weight:700;color:var(--pk);font-size:.95rem">${(po.total||0).toFixed(2)} ج.م</span>
-            <button onclick="editPO('${po.id}')" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
-            <button onclick="reprintPO('${po.id}')" style="background:var(--pk-pale);color:var(--pk2);border:1px solid var(--pk);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">🖨️ طباعة</button>
-            <button onclick="deletePORec('${po.id}')" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
+            <button onclick="editPO(${po.id})" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
+            <button onclick="reprintPO(${po.id})" style="background:var(--pk-pale);color:var(--pk2);border:1px solid var(--pk);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">🖨️ طباعة</button>
+            <button onclick="deletePORec(${po.id})" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
           </div>
         </div>
         <div style="font-size:.8rem;color:var(--muted)">🏪 ${po.supplier||'—'} ${po.supplier_phone?'| 📞 '+po.supplier_phone:''}</div>
@@ -5295,9 +5157,9 @@ async function loadInvList() {
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <span style="font-weight:700;color:var(--pk);font-size:.95rem">${(inv.total||0).toFixed(2)} ج.م</span>
-            <button onclick="editInv('${inv.id}')" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
-            <button onclick="reprintInv('${inv.id}')" style="background:var(--pk-pale);color:var(--pk2);border:1px solid var(--pk);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">🖨️ طباعة</button>
-            <button onclick="deleteInvRec('${inv.id}')" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
+            <button onclick="editInv(${inv.id})" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
+            <button onclick="reprintInv(${inv.id})" style="background:var(--pk-pale);color:var(--pk2);border:1px solid var(--pk);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">🖨️ طباعة</button>
+            <button onclick="deleteInvRec(${inv.id})" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
           </div>
         </div>
         <div style="font-size:.8rem;color:var(--muted)">👤 ${inv.client||'—'} ${inv.client_phone?'| 📞 '+inv.client_phone:''}</div>
@@ -6259,8 +6121,8 @@ async function loadPiList() {
           </div>
           <div style="display:flex;gap:6px;align-items:center">
             <span style="font-weight:700;color:var(--pk);font-size:.95rem">${(pi.total||0).toFixed(2)} ج.م</span>
-            <button onclick="reprintPI('${pi.id}')" style="background:var(--pk-pale);color:var(--pk2);border:1px solid var(--pk);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">🖨️ طباعة</button>
-            <button onclick="deletePiRec('${pi.id}')" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
+            <button onclick="reprintPI(${pi.id})" style="background:var(--pk-pale);color:var(--pk2);border:1px solid var(--pk);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">🖨️ طباعة</button>
+            <button onclick="deletePiRec(${pi.id})" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
           </div>
         </div>
         <div style="font-size:.8rem;color:var(--muted)">🏪 ${pi.supplier||'—'} ${pi.supplier_phone?'| 📞 '+pi.supplier_phone:''}</div>
@@ -6427,8 +6289,8 @@ async function loadSupplierList() {
           ${s.email?`<span style="font-size:.78rem;color:var(--muted)">📧 ${s.email}</span>`:''}
         </div>
         <div style="display:flex;gap:6px">
-          <button onclick="editSupplier('${s.id}')" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
-          <button onclick="deleteSupplier('${s.id}')" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
+          <button onclick="editSupplier(${s.id})" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
+          <button onclick="deleteSupplier(${s.id})" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
         </div>
       </div>
       ${s.address?`<div style="font-size:.78rem;color:var(--muted);margin-top:6px">📍 ${s.address}</div>`:''}
@@ -6438,7 +6300,7 @@ async function loadSupplierList() {
 }
 
 async function editSupplier(id) {
-  const s = window._SUPPLIERS.find(x => String(x.id) === String(id));
+  const s = window._SUPPLIERS.find(x => x.id === id);
   if (!s) return;
   document.getElementById('supplier-add-form').style.display = '';
   document.getElementById('sup-edit-id').value = s.id;
@@ -6520,7 +6382,7 @@ async function loadTreasury() {
         </div>
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-weight:800;font-size:1rem;color:${isIncome?'#155724':'#721c24'}">${isIncome?'+':'−'}${parseFloat(tr.amount).toFixed(2)} ج.م</span>
-          <button onclick="deleteTreasuryEntry('${tr.id}')" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:8px;padding:2px 8px;font-size:.72rem;cursor:pointer">🗑</button>
+          <button onclick="deleteTreasuryEntry(${tr.id})" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:8px;padding:2px 8px;font-size:.72rem;cursor:pointer">🗑</button>
         </div>
       </div>`;
     }).join('');
