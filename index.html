@@ -294,6 +294,11 @@ body.staff-sales .gal-add-btn,body.manager .gal-add-btn{display:flex;}
 .stock-control-row button{padding:5px 14px;border-radius:20px;border:none;font-size:.82rem;font-weight:700;cursor:pointer;transition:.2s;}
 .d-save-main{background:linear-gradient(135deg,var(--gd),var(--gd2));color:var(--dark);border:none;padding:9px;border-radius:26px;font-size:.84rem;font-weight:700;cursor:pointer;transition:.2s;width:100%;}
 .d-save-main:hover{box-shadow:0 5px 14px rgba(212,160,23,.35);}
+/* Manager only fields in edit mode */
+.manager-only-field { display: none !important; }
+body.manager .d-box.edit-mode .manager-only-field.edit-field { display: block !important; }
+body.manager .d-box .manager-only-field.view-field { display: block !important; }
+
 /* Hide admin controls completely from regular customers (non-authenticated users) */
 body:not(.manager):not(.staff-orders):not(.staff-sales) .d-admin-controls{display:none !important;visibility:hidden !important;pointer-events:none !important;}
 
@@ -1306,6 +1311,22 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
         <textarea class="e-area" id="d-description-edit" rows="3"></textarea>
       </div>
 
+      <!-- Supplier — manager only in edit mode -->
+      <div class="edit-field manager-only-field" id="d-supplier-wrap" style="margin-top:8px;display:none">
+        <span class="e-lbl">🏪 المورّد (للمدير فقط)</span>
+        <select class="e-inp" id="d-supplier-sel" style="margin-bottom:6px;border-color:rgba(212,160,23,.5);background:linear-gradient(to left,var(--gd-pale),#fff)" onchange="dOnSupplierSelect(this)">
+          <option value="">— اختر من القائمة —</option>
+        </select>
+        <input class="e-inp" id="d-supplier-manual" list="d-supplier-datalist" placeholder="أو اكتب اسم المورّد يدوياً..." style="border-color:rgba(212,160,23,.35);font-size:.83rem">
+        <datalist id="d-supplier-datalist"></datalist>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:4px">اللي تكتبيه يدوياً هو اللي يتحفظ — القائمة للاختيار السريع فقط</div>
+      </div>
+
+      <!-- Supplier view (non-edit) — manager only -->
+      <div class="view-field manager-only-field" id="d-supplier-view-wrap" style="display:none;margin-top:4px;background:var(--gd-pale);border:1px solid var(--gd);border-radius:10px;padding:7px 12px;font-size:.83rem">
+        <span style="color:#7a5000;font-weight:700">🏪 المورّد: </span><span id="d-supplier-view-val" style="color:var(--deep);font-weight:600"></span>
+      </div>
+
       <!-- PROFIT BOX — manager only -->
       <div class="profit-box" id="profit-box">
         <div class="pb-title">💰 حساب الربحية (داخلي)</div>
@@ -1359,6 +1380,7 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
       <button class="d-tab" onclick="swDTab('dt-ingr',this)">🌿 المكونات</button>
       <button class="d-tab" onclick="swDTab('dt-tips',this)">💡 نصائح</button>
       <button class="d-tab" onclick="swDTab('dt-info',this)">ℹ️ معلومات</button>
+      <button class="d-tab d-tab-card-mgr" onclick="swDTab('dt-mini-card',this)" style="display:none">📋 كارت المنتج</button>
     </div>
     <div class="d-panel ac" id="dt-use">
       <ol class="steps-ol view-field" id="use-view"></ol>
@@ -1375,6 +1397,10 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
     <div class="d-panel" id="dt-info">
       <p class="view-field" id="info-view" style="white-space:pre-line;color:var(--muted);font-size:.86rem;line-height:1.9"></p>
       <textarea class="e-area edit-field" id="info-edit" rows="4"></textarea>
+    </div>
+    <!-- كارت المنتج — للإدارة فقط -->
+    <div class="d-panel" id="dt-mini-card">
+      <div id="dmc-content" style="padding:6px 0"></div>
     </div>
   </div>
 
@@ -2020,7 +2046,42 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
             <button onclick="document.getElementById('supplier-add-form').style.display='none'" style="background:var(--muted);color:#fff;border:none;border-radius:14px;padding:8px 16px;font-size:.85rem;cursor:pointer">إلغاء</button>
           </div>
         </div>
+        <div id="supplier-debts-summary" style="display:none;margin-bottom:16px;background:#fff3cd;border:1.5px solid #ffc107;border-radius:12px;padding:14px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+            <span style="font-weight:800;color:#856404;font-size:.95rem">⚠️ إجمالي ديون المحل للموردين</span>
+            <span id="supplier-total-debt" style="font-size:1.2rem;font-weight:800;color:#dc3545"></span>
+          </div>
+        </div>
         <div id="supplier-list-body"><p style="color:var(--muted);text-align:center;padding:20px">⏳ جارٍ التحميل...</p></div>
+        <!-- بروفايل مورد -->
+        <div id="supplier-profile-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:5000;overflow-y:auto;padding:20px">
+          <div style="background:#fff;max-width:720px;margin:20px auto;border-radius:18px;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+              <h3 id="sp-name" style="color:var(--deep);font-size:1.1rem;margin:0">بروفايل المورد</h3>
+              <button onclick="document.getElementById('supplier-profile-overlay').style.display='none'" style="background:var(--muted);color:#fff;border:none;border-radius:50%;width:34px;height:34px;font-size:1.1rem;cursor:pointer;flex-shrink:0">✕</button>
+            </div>
+            <div id="sp-info" style="background:var(--pk-pale);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:.85rem;color:var(--deep)">—</div>
+            <div id="sp-finance-summary" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:18px"></div>
+            <h5 style="color:var(--deep);margin-bottom:8px;font-size:.88rem">📋 سجل الفواتير والديون</h5>
+            <div id="sp-debts-list" style="max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:16px"></div>
+            <div style="background:var(--gd-pale);border-radius:12px;padding:14px;border:1.5px solid var(--gd);margin-bottom:14px">
+              <h5 style="color:#7a5000;margin-bottom:10px;font-size:.86rem">💵 تسجيل دفعة للمورد</h5>
+              <input type="hidden" id="sp-pay-supplier-name">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+                <div class="f-row" style="margin:0"><label>المبلغ (ج.م)</label><input id="sp-pay-amount" type="number" min="1" placeholder="0.00" style="direction:ltr"></div>
+                <div class="f-row" style="margin:0"><label>طريقة الدفع</label>
+                  <select id="sp-pay-method" style="border:1.5px solid var(--border);border-radius:8px;padding:8px;width:100%">
+                    <option value="كاش">كاش</option><option value="تحويل بنكي">تحويل بنكي</option><option value="شيك">شيك</option>
+                  </select>
+                </div>
+              </div>
+              <div class="f-row" style="margin:0 0 10px"><label>ملاحظة</label><input id="sp-pay-notes" placeholder="مثال: دفعة أولى على PI-0001"></div>
+              <button onclick="paySupplierDebt()" style="background:var(--success);color:#fff;border:none;border-radius:12px;padding:10px 24px;font-weight:700;font-size:.88rem;cursor:pointer">💾 تسجيل الدفعة</button>
+            </div>
+            <h5 style="color:var(--deep);margin-bottom:8px;font-size:.88rem">💳 سجل المدفوعات</h5>
+            <div id="sp-payments-list" style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:10px"></div>
+          </div>
+        </div>
       </div>
 
       <!-- TAB: TREASURY الخزينة -->
@@ -3340,7 +3401,7 @@ function formatDesc(text) {
     }).filter(Boolean).join('') + '</ul>';
 }
 
-function openDetail(id) {
+async function openDetail(id) {
   const p = PRODUCTS.find(x => String(x.id) === String(id));
   if (!p) return;
   openProdId = id;
@@ -3468,11 +3529,48 @@ function openDetail(id) {
   const costEl = document.getElementById('d-cost');
   if (costEl) { costEl.value = p.cost || ''; calcProfit(); }
 
+  // ── Supplier (manager only) ──
+  const supViewWrap = document.getElementById('d-supplier-view-wrap');
+  const supViewVal  = document.getElementById('d-supplier-view-val');
+  const supWrap     = document.getElementById('d-supplier-wrap');
+  const supManual   = document.getElementById('d-supplier-manual');
+  if (currentUser && currentUser.role === 'manager') {
+    // view mode
+    if (supViewWrap && supViewVal) {
+      if (p.supplier) { supViewVal.textContent = p.supplier + (p.supplier_phone ? ' — ' + p.supplier_phone : ''); supViewWrap.style.display = 'block'; }
+      else { supViewWrap.style.display = 'none'; }
+    }
+    // edit mode — fill manual field & load dropdown
+    if (supManual) supManual.value = p.supplier || '';
+    if (supWrap) {
+      // Load suppliers dropdown
+      try {
+        const sups = await sbGet('suppliers', 'select=id,name,phone&order=name.asc');
+        window._SUPPLIERS = sups || [];
+        const dl = document.getElementById('d-supplier-datalist');
+        if (dl) dl.innerHTML = sups.map(s=>`<option value="${s.name}">${s.name}${s.phone?' — '+s.phone:''}</option>`).join('');
+        const selEl = document.getElementById('d-supplier-sel');
+        if (selEl) {
+          selEl.innerHTML = '<option value="">— اختر من القائمة —</option>' +
+            sups.map(s=>`<option value="${s.id}">${s.name}${s.phone?' ('+s.phone+')':''}</option>`).join('');
+          // Pre-select if supplier matches
+          const matched = sups.find(s => s.name === p.supplier);
+          if (matched) selEl.value = matched.id;
+        }
+      } catch(e) { console.warn('فشل تحميل الموردين:', e); }
+    }
+  } else {
+    if (supViewWrap) supViewWrap.style.display = 'none';
+  }
+
   // ── Reset tabs ──
   document.querySelectorAll('.d-tab').forEach(t=>t.classList.remove('ac'));
   document.querySelectorAll('.d-panel').forEach(t=>t.classList.remove('ac'));
   document.querySelector('.d-tab').classList.add('ac');
   document.getElementById('dt-use').classList.add('ac');
+  // Show product card tab for managers/staff only
+  const cardTabBtn = document.querySelector('.d-tab-card-mgr');
+  if (cardTabBtn) cardTabBtn.style.display = (currentUser && ['manager','sales','asst_manager','orders'].includes(currentUser.role)) ? 'inline-block' : 'none';
 
   // ── Edit toggle ──
   document.getElementById('d-box').classList.remove('edit-mode');
@@ -3526,6 +3624,49 @@ function swDTab(id, btn) {
   document.querySelectorAll('.d-tab').forEach(t => t.classList.remove('ac'));
   document.querySelectorAll('.d-panel').forEach(t => t.classList.remove('ac'));
   btn.classList.add('ac'); document.getElementById(id).classList.add('ac');
+  // Render mini card when that tab is opened
+  if (id === 'dt-mini-card') renderDetailMiniCard();
+}
+
+function renderDetailMiniCard() {
+  const p = PRODUCTS.find(x => String(x.id) === String(openProdId));
+  const el = document.getElementById('dmc-content');
+  if (!p || !el) return;
+  const isMgr = currentUser && currentUser.role === 'manager';
+  const discount = (p.old_price && p.price) ? Math.round((1 - p.price/p.old_price)*100) : 0;
+  const profit = (isMgr && p.cost && p.price) ? (p.price - p.cost).toFixed(2) : null;
+  const profitPct = (isMgr && p.cost && p.price) ? ((1 - p.cost/p.price)*100).toFixed(1) : null;
+  const qty = typeof p.qty === 'number' ? p.qty : (p.stock_qty ?? '—');
+  el.innerHTML = `
+    <div style="background:#fff;border-radius:16px;overflow:hidden;border:1.5px solid var(--border);box-shadow:0 4px 20px rgba(232,77,138,.1)">
+      <!-- Header -->
+      <div style="background:linear-gradient(135deg,var(--blk),var(--dark),#4a0e28);padding:14px 18px;display:flex;align-items:center;gap:12px">
+        <div style="width:56px;height:56px;border-radius:10px;overflow:hidden;border:2px solid var(--gd);flex-shrink:0;background:var(--pk-pale);display:flex;align-items:center;justify-content:center;font-size:1.8rem">
+          ${p.img_data ? `<img src="${p.img_data}" style="width:100%;height:100%;object-fit:cover">` : (p.emoji||'🧴')}
+        </div>
+        <div style="flex:1">
+          <div style="font-size:.65rem;color:var(--gd);letter-spacing:2px;font-weight:700;text-transform:uppercase;margin-bottom:2px">${p.cat||''}</div>
+          <div style="font-family:'Playfair Display',serif;font-size:1rem;color:#fff;font-weight:700;line-height:1.3">${p.name}</div>
+          ${p.sku ? `<div style="background:rgba(212,160,23,.2);border:1px solid var(--gd);color:var(--gd);border-radius:16px;padding:1px 9px;font-size:.68rem;font-weight:700;display:inline-block;margin-top:3px">🏷 ${p.sku}</div>` : `<div style="background:rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:16px;padding:1px 9px;font-size:.68rem;display:inline-block;margin-top:3px">ID: ${p.id}</div>`}
+        </div>
+        <div style="text-align:center">
+          <div style="font-family:'Playfair Display',serif;font-size:1.6rem;color:var(--pk);font-weight:700;line-height:1">${p.price_tbd ? '—' : (p.price||0)+' ج.م'}</div>
+          ${p.old_price && !p.price_tbd ? `<div style="font-size:.72rem;color:#999;text-decoration:line-through">${p.old_price} ج.م</div>` : ''}
+          ${discount > 0 ? `<div style="background:var(--pk);color:#fff;border-radius:10px;padding:1px 7px;font-size:.68rem;font-weight:700;margin-top:2px">خصم ${discount}%</div>` : ''}
+        </div>
+      </div>
+      <!-- Body -->
+      <div style="padding:14px 18px;display:flex;flex-direction:column;gap:7px">
+        <div class="pc-row"><span class="pc-lbl">الحالة</span><span class="pc-val ${p.in_stock===false?'pc-pink':'pc-green'}">${p.in_stock===false?'❌ نفذت الكمية':'✅ متاح'}</span></div>
+        <div class="pc-row"><span class="pc-lbl">الكمية</span><span class="pc-val" style="font-weight:800">${qty}</span></div>
+        <div class="pc-row"><span class="pc-lbl">الفئة</span><span class="pc-val">${p.cat||'—'}</span></div>
+        ${p.badge ? `<div class="pc-row"><span class="pc-lbl">الشارة</span><span class="pc-val pc-gold">${p.badge==='new'?'✨ جديد':p.badge==='sale'?'🏷️ خصم':p.badge==='best'?'⭐ الأكثر مبيعاً':p.badge}</span></div>` : ''}
+        ${p.deposit ? `<div class="pc-row"><span class="pc-lbl">العربون</span><span class="pc-val pc-gold">${p.deposit} ج.م</span></div>` : ''}
+        ${isMgr && p.cost ? `<div class="pc-row"><span class="pc-lbl">سعر الشراء</span><span class="pc-val">${p.cost} ج.م</span></div>` : ''}
+        ${profit !== null ? `<div class="pc-row"><span class="pc-lbl">هامش الربح</span><span class="pc-val pc-green">${profit} ج.م (${profitPct}%)</span></div>` : ''}
+        ${p.supplier ? `<div class="pc-row"><span class="pc-lbl">المورّد</span><span class="pc-val">${p.supplier}${p.supplier_phone?' — '+p.supplier_phone:''}</span></div>` : ''}
+      </div>
+    </div>`;
 }
 
 // ══ GALLERY ══
@@ -3693,6 +3834,19 @@ function calcProfit() {
   profitPct.style.color = profit >= 0 ? '#27ae60' : '#e74c3c';
 }
 
+function dOnSupplierSelect(sel) {
+  if (!sel.value) return;
+  const s = (window._SUPPLIERS||[]).find(x=>String(x.id)===String(sel.value));
+  if (s) {
+    const man = document.getElementById('d-supplier-manual');
+    if (man) man.value = s.name;
+  }
+}
+function dGetSupplierName() {
+  const man = document.getElementById('d-supplier-manual');
+  return (man ? man.value.trim() : '') || '';
+}
+
 async function saveDetail() {
   if (!currentUser || !['manager','sales'].includes(currentUser.role)) return;
   const usage = document.getElementById('use-edit').value.split('\n').filter(x=>x.trim());
@@ -3715,6 +3869,19 @@ async function saveDetail() {
     info:        document.getElementById('info-edit').value.trim(),
     sku:         (document.getElementById('d-sku-edit')?.value || '').trim() || null,
   };
+  // Add supplier for manager
+  if (currentUser && currentUser.role === 'manager') {
+    const supName = dGetSupplierName();
+    updates.supplier = supName || null;
+    // Find phone from dropdown selection
+    const selEl = document.getElementById('d-supplier-sel');
+    let supPhone = null;
+    if (selEl && selEl.value) {
+      const sObj = (window._SUPPLIERS||[]).find(s=>String(s.id)===String(selEl.value));
+      if (sObj) supPhone = sObj.phone || null;
+    }
+    updates.supplier_phone = supPhone;
+  }
   try {
     await sbPatch('products', openProdId, updates);
     const idx = PRODUCTS.findIndex(x => String(x.id) === String(openProdId));
@@ -3839,8 +4006,14 @@ async function saveNewProd() {
     var suppObj = (window._SUPPLIERS||[]).find(function(s){ return String(s.id)===String(suppSel.value); });
     if (suppObj) supplierPhone = suppObj.phone || '';
   }
+
+  // توليد كود SKU تلقائي
+  const cat = document.getElementById('np-cat').value || 'gen';
+  const catPrefix = {hair:'HR',face:'FC',body:'BD',makeup:'MK',women:'WM',care:'CR'}[cat] || cat.toUpperCase().slice(0,2);
+  const autoSku = 'OR-' + catPrefix + '-' + String(Date.now()).slice(-5);
+
   const prod = {
-    name, cat: document.getElementById('np-cat').value,
+    name, cat,
     emoji: document.getElementById('np-emoji').value || '🧴',
     in_stock: true,
     img_data: imgs[0] || null,
@@ -3856,7 +4029,13 @@ async function saveNewProd() {
     info: document.getElementById('np-info').value.trim(),
     supplier: supplierName || null,
     supplier_phone: supplierPhone || null,
+    sku: autoSku,
   };
+
+  // تعطيل زر الحفظ فوراً لمنع التكرار
+  const saveBtn = document.getElementById('np-save-btn');
+  if (saveBtn) { saveBtn.textContent = '⏳ جارٍ الحفظ...'; saveBtn.disabled = true; }
+
   try {
     const res = await sbPost('products', prod);
     const saved = Array.isArray(res) ? res[0] : res;
@@ -3865,22 +4044,16 @@ async function saveNewProd() {
     renderProds(curFilter); renderCats();
     document.getElementById('stat-n').textContent = PRODUCTS.length;
     saveLocal('products', PRODUCTS);
-    // عرض كود المنتج في بانل الأساسيات
-    const newCode = saved.sku || saved.code || saved.id || '—';
-    const codeCard = document.getElementById('np-saved-code-card');
-    const codeVal  = document.getElementById('np-saved-code-val');
-    if (codeCard && codeVal) {
-      codeVal.textContent = String(newCode);
-      codeCard.style.display = 'block';
-    }
-    window._npLastSavedCode = String(newCode);
-    // الانتقال للخطوة الأولى لعرض البطاقة
-    goNpStep(0);
-    // تحديث زر الحفظ
-    const saveBtn = document.getElementById('np-save-btn');
-    if (saveBtn) { saveBtn.textContent = '✅ تم الحفظ'; saveBtn.disabled = true; }
-    toast(`✦ تمت إضافة "${name}" — الكود: ${newCode} ✓`);
-  } catch(e) { toast('⚠️ خطأ في إضافة المنتج: ' + (e.message||e)); console.error(e); }
+    const newCode = saved.sku || saved.code || saved.id || autoSku;
+    toast(`✦ تمت إضافة "${name}" — الكود: ${newCode} ✓`, 3500);
+    // ✅ إغلاق الـ modal فوراً بعد الحفظ
+    closeMod('add-prod-modal');
+  } catch(e) {
+    toast('⚠️ خطأ في إضافة المنتج: ' + (e.message||e));
+    console.error(e);
+    // إعادة تفعيل الزر في حالة الخطأ
+    if (saveBtn) { saveBtn.textContent = '✦ حفظ المنتج'; saveBtn.disabled = false; }
+  }
 }
 
 function npCopyCode() {
@@ -6705,9 +6878,23 @@ async function savePiOnly() {
           renderProds(curFilter);
           // تحديث قيد الخزينة
           const trEntries = await sbGet('treasury', `ref_id=eq.${oldRows[0].pi_number}&type=eq.purchase_expense&select=id`);
-          for (const tr of trEntries) {
-            await sbPatch('treasury', tr.id, { amount: d.subtotal, description: `مصروف فاتورة شراء ${d.number} — ${d.supplier}`, ref_id: d.number });
+          if (d.payment !== 'آجل') {
+            for (const tr of trEntries) {
+              await sbPatch('treasury', tr.id, { amount: d.subtotal, description: `مصروف فاتورة شراء ${d.number} — ${d.supplier}`, ref_id: d.number });
+            }
+            if (!trEntries.length) {
+              await sbPost('treasury', {
+                type:'purchase_expense', description:`مصروف فاتورة شراء ${d.number} — ${d.supplier}`,
+                amount:d.subtotal, ref_id:d.number, created_at:new Date().toISOString(), created_by:currentUser?.username||'manager'
+              }).catch(()=>{});
+            }
+          } else {
+            for (const tr of trEntries) { await sbDelete('treasury', tr.id).catch(()=>{}); }
           }
+          const _existDebt = await sbGet('supplier_debts', 'pi_number=eq.'+encodeURIComponent(d.number)+'&select=id').catch(()=>[]);
+          const _debtRec = { supplier_name:d.supplier, supplier_phone:d.supplierPhone, pi_number:d.number, total_amount:d.subtotal, paid_amount:d.payment!=='آجل'?d.subtotal:0, remaining:d.payment!=='آجل'?0:d.subtotal, payment_method:d.payment, status:d.payment!=='آجل'?'مدفوع':'آجل', date:d.date||new Date().toISOString().split('T')[0] };
+          if (_existDebt&&_existDebt.length) { await sbPatch('supplier_debts',_existDebt[0].id,_debtRec).catch(()=>{}); }
+          else { await sbPost('supplier_debts',{..._debtRec,created_at:new Date().toISOString(),created_by:currentUser?.username||'manager'}).catch(()=>{}); }
         }
       } catch(ue) { console.warn('PI edit stock/treasury update failed:', ue); }
       await sbPatch('purchase_invoices', parseInt(editId), record);
@@ -6732,18 +6919,36 @@ async function savePiOnly() {
       }
       saveLocal('products', PRODUCTS);
       renderProds(curFilter);
-      // تسجيل في الخزينة كمصروف شراء
+      // ── آجل = دين على المحل (لا يُخصم من الخزينة الآن) ──
+      // نقدي/شيك/تحويل → مصروف فوري | آجل → يُسجَّل دين فقط
       try {
-        await sbPost('treasury', {
-          type: 'purchase_expense',
-          description: `مصروف فاتورة شراء ${d.number} — ${d.supplier}`,
-          amount: d.subtotal,
-          ref_id: d.number,
-          created_at: new Date().toISOString(),
-          created_by: currentUser?.username || 'manager'
-        });
+        if (d.payment !== 'آجل') {
+          await sbPost('treasury', {
+            type: 'purchase_expense',
+            description: `مصروف فاتورة شراء ${d.number} — ${d.supplier}`,
+            amount: d.subtotal, ref_id: d.number,
+            created_at: new Date().toISOString(),
+            created_by: currentUser?.username || 'manager'
+          });
+        }
+        await sbPost('supplier_debts', {
+          supplier_name:  d.supplier,
+          supplier_phone: d.supplierPhone,
+          pi_number:      d.number,
+          total_amount:   d.subtotal,
+          paid_amount:    d.payment !== 'آجل' ? d.subtotal : 0,
+          remaining:      d.payment !== 'آجل' ? 0 : d.subtotal,
+          payment_method: d.payment,
+          status:         d.payment !== 'آجل' ? 'مدفوع' : 'آجل',
+          date:           d.date || new Date().toISOString().split('T')[0],
+          created_at:     new Date().toISOString(),
+          created_by:     currentUser?.username || 'manager'
+        }).catch(e => console.warn('supplier_debts:', e));
       } catch(te) { console.warn('Treasury entry failed:', te); }
-      toast('✅ تم حفظ فاتورة الشراء وتحديث المخزون والخزينة');
+      const _lbl = d.payment === 'آجل'
+        ? '⏳ تم تسجيل الدين على المورد (لم يُخصم من الخزينة)'
+        : '✅ تم حفظ فاتورة الشراء وتحديث المخزون والخزينة';
+      toast(_lbl);
       setTimeout(() => initPiRows(), 300);
     }
   } catch(e) { toast('⚠️ خطأ في الحفظ: ' + e.message); console.error(e); }
@@ -6931,25 +7136,112 @@ async function loadSupplierList() {
   const el = document.getElementById('supplier-list-body');
   el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">⏳ جارٍ التحميل...</p>';
   try {
-    const list = await sbGet('suppliers', 'order=name.asc&select=*');
-    window._SUPPLIERS = list;
-    if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">لا يوجد موردون مسجّلون بعد</p>'; return; }
-    el.innerHTML = list.map(s => `<div style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1.5px solid var(--border);box-shadow:var(--shadow)">
-      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <div>
-          <span style="font-weight:800;color:var(--deep);font-size:.95rem">🏪 ${s.name}</span>
-          ${s.phone?`<span style="font-size:.78rem;color:var(--muted);margin-right:12px">📞 ${s.phone}</span>`:''}
-          ${s.email?`<span style="font-size:.78rem;color:var(--muted)">📧 ${s.email}</span>`:''}
+    const [listRes, debtsRes] = await Promise.allSettled([
+      sbGet('suppliers', 'order=name.asc&select=*'),
+      sbGet('supplier_debts', 'select=supplier_name,remaining,status').catch(()=>[])
+    ]);
+    window._SUPPLIERS = listRes.status==='fulfilled' ? listRes.value : [];
+    const debtsList = debtsRes.status==='fulfilled' ? debtsRes.value : [];
+    const debtMap = {};
+    debtsList.forEach(d => { const r=parseFloat(d.remaining)||0; if(r>0) debtMap[d.supplier_name]=(debtMap[d.supplier_name]||0)+r; });
+    const totalDebt = Object.values(debtMap).reduce((a,b)=>a+b,0);
+    const sumEl = document.getElementById('supplier-debts-summary');
+    const totEl = document.getElementById('supplier-total-debt');
+    if(sumEl) sumEl.style.display = totalDebt>0?'':'none';
+    if(totEl) totEl.textContent = totalDebt.toFixed(2)+' ج.م';
+    if(!window._SUPPLIERS.length){ el.innerHTML='<p style="color:var(--muted);text-align:center;padding:20px">لا يوجد موردون مسجّلون بعد</p>'; return; }
+    el.innerHTML = window._SUPPLIERS.map(s => {
+      const debt = debtMap[s.name]||0;
+      const badge = debt>0
+        ? `<span style="background:#dc3545;color:#fff;border-radius:8px;padding:2px 10px;font-size:.7rem;font-weight:700">⚠️ دين ${debt.toFixed(2)} ج.م</span>`
+        : `<span style="background:#d4edda;color:#155724;border-radius:8px;padding:2px 10px;font-size:.7rem;font-weight:700">✅ سداد كامل</span>`;
+      return `<div style="background:#fff;border-radius:12px;padding:14px 16px;margin-bottom:10px;border:1.5px solid ${debt>0?'#ffc107':'var(--border)'};box-shadow:var(--shadow)">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <span style="font-weight:800;color:var(--deep);font-size:.95rem">🏪 ${s.name}</span>
+            ${badge}
+            ${s.phone?`<span style="font-size:.78rem;color:var(--muted)">📞 ${s.phone}</span>`:''}
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button onclick="openSupplierProfile('${s.id}','${(s.name||'').replace(/'/g,String.fromCharCode(92,39))}')" style="background:var(--pk);color:#fff;border:none;border-radius:10px;padding:4px 12px;font-size:.75rem;cursor:pointer;font-weight:700">👤 البروفايل</button>
+            <button onclick="editSupplier('${s.id}')" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
+            <button onclick="deleteSupplier('${s.id}')" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
+          </div>
         </div>
-        <div style="display:flex;gap:6px">
-          <button onclick="editSupplier('${s.id}')" style="background:var(--gd-pale);color:#7a5000;border:1px solid var(--gd);border-radius:10px;padding:3px 12px;font-size:.75rem;cursor:pointer;font-weight:700">✏️ تعديل</button>
-          <button onclick="deleteSupplier('${s.id}')" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:10px;padding:3px 10px;font-size:.75rem;cursor:pointer">🗑</button>
-        </div>
-      </div>
-      ${s.address?`<div style="font-size:.78rem;color:var(--muted);margin-top:6px">📍 ${s.address}</div>`:''}
-      ${s.notes?`<div style="font-size:.75rem;color:#7a5000;margin-top:4px;background:var(--gd-pale);padding:3px 8px;border-radius:6px">📝 ${s.notes}</div>`:''}
-    </div>`).join('');
-  } catch(e) { el.innerHTML = '<p style="color:var(--danger);text-align:center;padding:20px">⚠️ خطأ في تحميل الموردين</p>'; }
+        ${s.address?`<div style="font-size:.78rem;color:var(--muted);margin-top:6px">📍 ${s.address}</div>`:''}
+        ${s.notes?`<div style="font-size:.75rem;color:#7a5000;margin-top:4px;background:var(--gd-pale);padding:3px 8px;border-radius:6px">📝 ${s.notes}</div>`:''}
+      </div>`;
+    }).join('');
+  } catch(e) { el.innerHTML='<p style="color:var(--danger);text-align:center;padding:20px">⚠️ خطأ في تحميل الموردين</p>'; }
+}
+
+async function openSupplierProfile(id, name) {
+  const ov = document.getElementById('supplier-profile-overlay');
+  ov.style.display='';
+  document.getElementById('sp-name').textContent = '🏪 '+name;
+  document.getElementById('sp-pay-supplier-name').value = name;
+  document.getElementById('sp-debts-list').innerHTML = '<p style="color:var(--muted);text-align:center;padding:14px">⏳</p>';
+  document.getElementById('sp-payments-list').innerHTML = '<p style="color:var(--muted);text-align:center;padding:10px">⏳</p>';
+  const s = (window._SUPPLIERS||[]).find(x=>String(x.id)===String(id));
+  if(s) document.getElementById('sp-info').innerHTML =
+    [s.phone?'📞 '+s.phone:'', s.email?'📧 '+s.email:'', s.address?'📍 '+s.address:'', s.notes?'📝 '+s.notes:''].filter(Boolean).join('&nbsp;&nbsp;');
+  try {
+    const enc = encodeURIComponent(name);
+    const [dr, pr] = await Promise.allSettled([
+      sbGet('supplier_debts',  'supplier_name=eq.'+enc+'&order=created_at.desc&select=*'),
+      sbGet('supplier_payments','supplier_name=eq.'+enc+'&order=created_at.desc&select=*').catch(()=>[])
+    ]);
+    const dRows = dr.status==='fulfilled'?dr.value:[];
+    const pRows = pr.status==='fulfilled'?pr.value:[];
+    const tAmt  = dRows.reduce((a,r)=>a+(parseFloat(r.total_amount)||0),0);
+    const tPaid = dRows.reduce((a,r)=>a+(parseFloat(r.paid_amount)||0),0);
+    const tRem  = dRows.reduce((a,r)=>a+(parseFloat(r.remaining)||0),0);
+    document.getElementById('sp-finance-summary').innerHTML = `
+      <div style="background:#d4edda;border-radius:10px;padding:12px;text-align:center"><div style="font-size:.72rem;color:#155724">إجمالي الفواتير</div><div style="font-weight:800;color:#155724;font-size:1.05rem">${tAmt.toFixed(2)} ج.م</div></div>
+      <div style="background:#cce5ff;border-radius:10px;padding:12px;text-align:center"><div style="font-size:.72rem;color:#004085">المدفوع</div><div style="font-weight:800;color:#004085;font-size:1.05rem">${tPaid.toFixed(2)} ج.م</div></div>
+      <div style="background:${tRem>0?'#f8d7da':'#d4edda'};border-radius:10px;padding:12px;text-align:center"><div style="font-size:.72rem;color:${tRem>0?'#721c24':'#155724'}">المتبقي (دين)</div><div style="font-weight:800;color:${tRem>0?'#dc3545':'#28a745'};font-size:1.05rem">${tRem.toFixed(2)} ج.م</div></div>`;
+    document.getElementById('sp-debts-list').innerHTML = !dRows.length
+      ? '<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:12px">لا توجد فواتير مسجّلة</p>'
+      : dRows.map(d=>{
+          const sc=d.status==='مدفوع'?'#155724':d.status==='مدفوع جزئي'?'#856404':'#721c24';
+          const sb=d.status==='مدفوع'?'#d4edda':d.status==='مدفوع جزئي'?'#fff3cd':'#f8d7da';
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);font-size:.82rem;flex-wrap:wrap;gap:6px">
+            <div><span style="font-weight:700">${d.pi_number||'—'}</span> <span style="color:var(--muted);font-size:.78rem">${d.date||''}</span> <span style="background:${sb};color:${sc};border-radius:6px;padding:1px 8px;font-size:.7rem;font-weight:700">${d.status||''}</span></div>
+            <div>إجمالي: <strong>${parseFloat(d.total_amount||0).toFixed(2)}</strong> | متبقي: <strong style="color:${parseFloat(d.remaining)>0?'#dc3545':'#28a745'}">${parseFloat(d.remaining||0).toFixed(2)} ج.م</strong></div>
+          </div>`;}).join('');
+    document.getElementById('sp-payments-list').innerHTML = !pRows.length
+      ? '<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:10px">لا توجد دفعات بعد</p>'
+      : pRows.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);font-size:.82rem;flex-wrap:wrap;gap:6px">
+          <div><span style="color:var(--muted)">${(p.created_at||'').split('T')[0]}</span> <span style="background:#d4edda;color:#155724;border-radius:6px;padding:1px 8px;font-size:.7rem">${p.method||'كاش'}</span> ${p.notes?`<span style="color:var(--muted);font-size:.75rem">${p.notes}</span>`:''}</div>
+          <strong style="color:#28a745">${parseFloat(p.amount||0).toFixed(2)} ج.م</strong>
+        </div>`).join('');
+  } catch(e) { document.getElementById('sp-debts-list').innerHTML='<p style="color:var(--danger);padding:12px;font-size:.82rem">⚠️ خطأ في التحميل</p>'; }
+}
+
+async function paySupplierDebt() {
+  const name   = document.getElementById('sp-pay-supplier-name').value;
+  const amount = parseFloat(document.getElementById('sp-pay-amount').value);
+  const method = document.getElementById('sp-pay-method').value;
+  const notes  = document.getElementById('sp-pay-notes').value.trim();
+  if(!name||!amount||amount<=0){ toast('⚠️ أدخل المبلغ'); return; }
+  try {
+    await sbPost('supplier_payments',{ supplier_name:name, amount, method, notes, created_at:new Date().toISOString(), created_by:currentUser?.username||'manager' });
+    await sbPost('treasury',{ type:'purchase_expense', description:`دفعة للمورد ${name}${notes?' — '+notes:''}`, amount, ref_id:'PAY-'+Date.now(), created_at:new Date().toISOString(), created_by:currentUser?.username||'manager' });
+    let rem = amount;
+    const open = await sbGet('supplier_debts','supplier_name=eq.'+encodeURIComponent(name)+'&status=neq.مدفوع&order=created_at.asc&select=*').catch(()=>[]);
+    for(const d of open){
+      if(rem<=0) break;
+      const dr=parseFloat(d.remaining)||0; if(dr<=0) continue;
+      const pay=Math.min(rem,dr);
+      await sbPatch('supplier_debts',d.id,{ remaining:dr-pay, paid_amount:(parseFloat(d.paid_amount)||0)+pay, status:(dr-pay)<=0?'مدفوع':'مدفوع جزئي' });
+      rem-=pay;
+    }
+    toast('✅ تم تسجيل الدفعة وخصمها من الخزينة');
+    document.getElementById('sp-pay-amount').value='';
+    document.getElementById('sp-pay-notes').value='';
+    openSupplierProfile('',name);
+    loadSupplierList();
+  } catch(e){ toast('⚠️ خطأ: '+e.message); }
 }
 
 async function editSupplier(id) {
