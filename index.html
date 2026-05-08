@@ -1553,6 +1553,10 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
       <button class="dash-nav-btn" data-tab="dt-users" onclick="swDashNav('dt-users',this)">
         <span class="dnb-icon">🔑</span><span>إدارة المستخدمين</span>
       </button>
+      <div class="dash-sidebar-section dash-mgr-only">المراجعة</div>
+      <button class="dash-nav-btn dash-mgr-only" data-tab="dt-audit" onclick="swDashNav('dt-audit',this)">
+        <span class="dnb-icon">🔍</span><span>مراجعة المخزون</span>
+      </button>
     </div>
 
     <!-- Main Content -->
@@ -1570,6 +1574,7 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
         <button class="dmt-btn" onclick="swDashNav('dt-staff',this)" data-tab="dt-staff">👥 الموظفون</button>
         <button class="dmt-btn dash-mgr-only" onclick="swDashNav('dt-customers',this)" data-tab="dt-customers">🌸 العملاء</button>
         <button class="dmt-btn" onclick="swDashNav('dt-users',this)" data-tab="dt-users">🔑 المستخدمون</button>
+        <button class="dmt-btn dash-mgr-only" onclick="swDashNav('dt-audit',this)" data-tab="dt-audit">🔍 المراجعة</button>
       </div>
       <div class="dash-content-inner">
         <!-- keep old dash-body id for compatibility -->
@@ -2233,6 +2238,43 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
             <p style="color:var(--muted);text-align:center;padding:30px">⏳ جارٍ التحميل...</p>
           </div>
         </div>
+      </div>
+
+      <!-- TAB: AUDIT — مراجعة المخزون -->
+      <div id="dt-audit" class="dash-tab-panel">
+        <div class="dash-page-hdr">
+          <h2><span>🔍</span> مراجعة المخزون الشاملة</h2>
+          <div class="dph-actions">
+            <button onclick="runStockAudit()" id="audit-run-btn"
+              style="background:linear-gradient(135deg,var(--gd),var(--gd2));color:var(--dark);border:none;border-radius:12px;padding:8px 18px;font-size:.82rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:6px">
+              ▶ تشغيل المراجعة
+            </button>
+          </div>
+        </div>
+
+        <!-- Loading state -->
+        <div id="audit-loading" style="display:none;text-align:center;padding:40px 20px">
+          <div style="display:inline-block;width:36px;height:36px;border:3px solid rgba(232,77,138,.2);border-top-color:var(--pk);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:12px"></div>
+          <p id="audit-load-msg" style="color:var(--muted)">جاري تحليل البيانات…</p>
+          <div style="height:6px;background:var(--border);border-radius:6px;max-width:300px;margin:10px auto 0;overflow:hidden">
+            <div id="audit-progress" style="height:100%;background:linear-gradient(90deg,var(--pk),var(--gd));border-radius:6px;width:0%;transition:width .3s"></div>
+          </div>
+        </div>
+
+        <!-- Intro -->
+        <div id="audit-intro" style="text-align:center;padding:40px 20px">
+          <div style="font-size:2.8rem;margin-bottom:12px">🔍</div>
+          <p style="color:var(--muted);font-size:.88rem;line-height:1.8;max-width:480px;margin:0 auto 18px">
+            الأداة دي بتراجع فواتير البيع والشراء والخزينة وتحسب المخزون المتوقع لكل منتج وتقارنه بالرصيد الفعلي — لاكتشاف أي فرق أو غلطة.
+          </p>
+          <button onclick="runStockAudit()"
+            style="background:linear-gradient(135deg,var(--gd),var(--gd2));color:var(--dark);border:none;border-radius:30px;padding:10px 28px;font-size:.9rem;font-weight:700;cursor:pointer">
+            ▶ ابدأ المراجعة
+          </button>
+        </div>
+
+        <!-- Results -->
+        <div id="audit-results" style="display:none"></div>
       </div>
 
     </div><!-- /dash-content-inner -->
@@ -5087,6 +5129,7 @@ function swDashNav(id, navBtn) {
   if (id === 'dt-product-card') { /* ready — search driven */ }
   if (id === 'dt-treasury') loadTreasury();
   if (id === 'dt-users') loadUsersList();
+  if (id === 'dt-audit') { /* auto-run */ }
 }
 
 // ══════════════════════════════════════
@@ -7644,6 +7687,7 @@ async function loadTreasury() {
     else if (currentTrFilter === 'purchases') query = 'type=eq.purchase_expense&' + query;
     else if (currentTrFilter === 'expenses') query = 'type=eq.expense&' + query;
     const list = await sbGet('treasury', query);
+
     // حساب الملخص
     const allItems = await sbGet('treasury', 'select=type,amount');
     let totalSales = 0, totalPurchases = 0, totalExpenses = 0;
@@ -7655,6 +7699,30 @@ async function loadTreasury() {
       else if (item.type === 'expense') totalExpenses += amt;
     });
     const netProfit = totalSales - totalPurchases - totalExpenses;
+
+    // جلب بيانات الأرباح من فواتير البيع (profit + items cost)
+    let salesInvMap = {};
+    try {
+      const salesInvData = await sbGet('sales_invoices', 'select=inv_number,profit,items,total,subtotal');
+      salesInvData.forEach(si => {
+        // احسب تكلفة الفاتورة من المنتجات
+        let invoiceCost = 0;
+        try {
+          const items = JSON.parse(si.items || '[]');
+          items.forEach(item => {
+            const prod = PRODUCTS.find(p => p.name === (item.name || item.product_name) ||
+                         String(p.id) === String(item.prodId || item.product_id));
+            if (prod && prod.cost) invoiceCost += (parseFloat(prod.cost) || 0) * (item.qty || 1);
+          });
+        } catch(e) {}
+        const revenue = parseFloat(si.total || si.subtotal || 0);
+        // الربح = المحفوظ في الفاتورة أو محسوب من التكلفة
+        const profit = si.profit != null ? parseFloat(si.profit) :
+                       (invoiceCost > 0 ? revenue - invoiceCost : null);
+        salesInvMap[si.inv_number] = { profit, cost: invoiceCost, revenue };
+      });
+    } catch(e) { console.warn('Could not fetch sales invoices for profit:', e); }
+
     // عرض الملخص
     const summaryEl = document.getElementById('treasury-summary');
     if (summaryEl) {
@@ -7676,20 +7744,55 @@ async function loadTreasury() {
           <div style="font-size:1.3rem;font-weight:800;color:${netProfit>=0?'#155724':'#721c24'}">${netProfit.toFixed(2)} ج.م</div>
         </div>`;
     }
+
     if (!list.length) { el.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">لا توجد حركات بعد</p>'; return; }
+
     const typeLabels = { sales_income:'💚 محصّل بيع', purchase_expense:'🔴 مصروف شراء', expense:'🟠 مصروف عام', income:'💚 إيراد' };
+
     el.innerHTML = list.map(tr => {
       const d = new Date(tr.created_at).toLocaleDateString('ar-EG');
       const isIncome = tr.type === 'sales_income' || tr.type === 'income';
-      return `<div style="background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:8px;border:1.5px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-        <div>
-          <span style="font-size:.72rem;background:${isIncome?'#d4edda':'#f8d7da'};color:${isIncome?'#155724':'#721c24'};border-radius:8px;padding:1px 8px;font-weight:700;margin-left:8px">${typeLabels[tr.type]||tr.type}</span>
-          <span style="font-size:.85rem;font-weight:700;color:var(--deep)">${tr.description||'—'}</span>
-          <span style="font-size:.75rem;color:var(--muted);margin-right:8px">| 🕐 ${d}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="font-weight:800;font-size:1rem;color:${isIncome?'#155724':'#721c24'}">${isIncome?'+':'−'}${parseFloat(tr.amount).toFixed(2)} ج.م</span>
-          <button onclick="deleteTreasuryEntry('${tr.id}')" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:8px;padding:2px 8px;font-size:.72rem;cursor:pointer">🗑</button>
+      const revenue = parseFloat(tr.amount || 0);
+
+      // حساب صافي الربح لفواتير البيع فقط
+      let profitBadge = '';
+      if (tr.type === 'sales_income' && tr.ref_id) {
+        const invData = salesInvMap[tr.ref_id];
+        if (invData && invData.profit != null) {
+          const profit = invData.profit;
+          const pct = revenue > 0 ? ((profit / revenue) * 100).toFixed(0) : 0;
+          const pColor = profit >= 0 ? '#155724' : '#721c24';
+          const pBg    = profit >= 0 ? '#d4edda'  : '#f8d7da';
+          profitBadge = `<span style="font-size:.72rem;background:${pBg};color:${pColor};border-radius:8px;padding:2px 9px;font-weight:700;border:1px solid ${profit>=0?'#b8ddc8':'#f5c6cb'}">
+            📈 ربح: ${profit >= 0 ? '+' : ''}${profit.toFixed(2)} ج.م <span style="opacity:.7">(${pct}%)</span>
+          </span>`;
+        } else if (invData && invData.cost > 0) {
+          const calcProfit = revenue - invData.cost;
+          const pct = revenue > 0 ? ((calcProfit / revenue) * 100).toFixed(0) : 0;
+          const pColor = calcProfit >= 0 ? '#155724' : '#721c24';
+          const pBg    = calcProfit >= 0 ? '#d4edda'  : '#f8d7da';
+          profitBadge = `<span style="font-size:.72rem;background:${pBg};color:${pColor};border-radius:8px;padding:2px 9px;font-weight:700;border:1px solid ${calcProfit>=0?'#b8ddc8':'#f5c6cb'}">
+            📈 ربح: ${calcProfit >= 0 ? '+' : ''}${calcProfit.toFixed(2)} ج.م <span style="opacity:.7">(${pct}%)</span>
+          </span>`;
+        }
+      }
+
+      return `<div style="background:#fff;border-radius:12px;padding:12px 16px;margin-bottom:8px;border:1.5px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px">
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-size:.72rem;background:${isIncome?'#d4edda':'#f8d7da'};color:${isIncome?'#155724':'#721c24'};border-radius:8px;padding:1px 8px;font-weight:700">${typeLabels[tr.type]||tr.type}</span>
+              <span style="font-size:.85rem;font-weight:700;color:var(--deep)">${tr.description||'—'}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              ${profitBadge}
+              <span style="font-size:.75rem;color:var(--muted)">🕐 ${d}</span>
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-weight:800;font-size:1.05rem;color:${isIncome?'#155724':'#721c24'}">${isIncome?'+':'−'}${revenue.toFixed(2)} ج.م</span>
+            <button onclick="deleteTreasuryEntry('${tr.id}')" style="background:#f8d7da;color:#721c24;border:1px solid #f5c6cb;border-radius:8px;padding:2px 8px;font-size:.72rem;cursor:pointer">🗑</button>
+          </div>
         </div>
       </div>`;
     }).join('');
@@ -7713,6 +7816,392 @@ async function addTreasuryEntry() {
 async function deleteTreasuryEntry(id) {
   if (!confirm('حذف هذا القيد من الخزينة؟')) return;
   try { await sbDelete('treasury', id); toast('تم الحذف'); loadTreasury(); } catch(e) { toast('⚠️ خطأ في الحذف'); }
+}
+
+
+// ══════════════════════════════════════
+// 🔍 STOCK AUDIT — مراجعة المخزون الشاملة
+// ══════════════════════════════════════
+async function runStockAudit() {
+  document.getElementById('audit-intro').style.display = 'none';
+  document.getElementById('audit-results').style.display = 'none';
+  document.getElementById('audit-loading').style.display = 'block';
+  document.getElementById('audit-run-btn').disabled = true;
+
+  function setAuditProgress(pct, msg) {
+    document.getElementById('audit-progress').style.width = pct + '%';
+    document.getElementById('audit-load-msg').textContent = msg;
+  }
+
+  function parseItems(raw) {
+    try { return JSON.parse(raw || '[]'); } catch { return []; }
+  }
+
+  function fmtN(n) {
+    return Number(n || 0).toLocaleString('ar-EG', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+  }
+
+  function fmtDate(d) {
+    if (!d) return '—';
+    return new Date(d).toLocaleDateString('ar-EG', { year: 'numeric', month: 'short', day: 'numeric' });
+  }
+
+  try {
+    setAuditProgress(10, 'جاري تحميل المنتجات…');
+    const products = await sbGet('products', 'order=name.asc&select=id,name,sku,stock_qty,cost,price,supplier,created_at,in_stock');
+
+    setAuditProgress(28, 'جاري تحميل فواتير البيع…');
+    const salesInv = await sbGet('sales_invoices', 'order=created_at.desc&select=id,inv_number,client,date,total,items,payment_method,created_at,profit');
+
+    setAuditProgress(46, 'جاري تحميل فواتير الشراء…');
+    const purchInv = await sbGet('purchase_invoices', 'order=created_at.desc&select=id,pi_number,supplier,date,total,items,payment_method,created_at,shipping');
+
+    setAuditProgress(60, 'جاري تحميل أوامر الشراء…');
+    const purchOrders = await sbGet('purchase_orders', 'order=created_at.desc&select=id,po_number,supplier,date,total,items,created_at');
+
+    setAuditProgress(75, 'جاري تحميل الخزينة…');
+    const treasury = await sbGet('treasury', 'order=created_at.desc&select=id,type,amount,description,ref_id,created_at');
+
+    setAuditProgress(92, 'جاري التحليل…');
+
+    // ── بناء map المنتجات
+    const prodMap = {};
+    products.forEach(p => {
+      prodMap[p.id] = { ...p, calcBought: 0, calcSold: 0, piRefs: [], siRefs: [] };
+    });
+
+    // ── فواتير الشراء → إضافة مخزون
+    purchInv.forEach(pi => {
+      parseItems(pi.items).forEach(item => {
+        const pid = item.prodId || item.product_id;
+        let prod = pid && prodMap[pid] ? prodMap[pid] : products.find(p => p.name === (item.name || item.product_name));
+        if (prod) {
+          prodMap[prod.id].calcBought += (item.qty || 0);
+          prodMap[prod.id].piRefs.push({ num: pi.pi_number, qty: item.qty, date: pi.date });
+        }
+      });
+    });
+
+    // ── فواتير البيع → خصم مخزون
+    salesInv.forEach(si => {
+      parseItems(si.items).forEach(item => {
+        const pid = item.prodId || item.product_id;
+        let prod = pid && prodMap[pid] ? prodMap[pid] : products.find(p => p.name === (item.name || item.product_name));
+        if (prod) {
+          prodMap[prod.id].calcSold += (item.qty || 0);
+          prodMap[prod.id].siRefs.push({ num: si.inv_number, qty: item.qty, date: si.date, client: si.client });
+        }
+      });
+    });
+
+    // ── تحليل الخزينة
+    let treasuryIn = 0, treasuryOut = 0;
+    const treasuryByRef = {};
+    treasury.forEach(t => {
+      const amt = parseFloat(t.amount || 0);
+      if (t.type === 'sales_income') treasuryIn += amt;
+      else if (t.type === 'purchase_expense') treasuryOut += amt;
+      if (t.ref_id) {
+        if (!treasuryByRef[t.ref_id]) treasuryByRef[t.ref_id] = [];
+        treasuryByRef[t.ref_id].push(t);
+      }
+    });
+
+    // ── فواتير بدون خزينة
+    const salesNoTreasury = salesInv.filter(si =>
+      si.payment_method !== 'آجل' && !(treasuryByRef[si.inv_number] || []).some(e => e.type === 'sales_income')
+    );
+    const purchNoTreasury = purchInv.filter(pi =>
+      pi.payment_method !== 'آجل' && !(treasuryByRef[pi.pi_number] || []).some(e => e.type === 'purchase_expense')
+    );
+
+    // ── تصنيف المنتجات
+    const stockProblems = [], stockOk = [], neverBought = [];
+    Object.values(prodMap).forEach(p => {
+      const actual = p.stock_qty != null ? p.stock_qty : null;
+      const expected = p.calcBought - p.calcSold;
+      const diff = actual != null ? actual - expected : null;
+      if (p.calcBought === 0 && (p.stock_qty || 0) > 0) neverBought.push(p);
+      else if (actual != null && diff !== 0) stockProblems.push({ ...p, expected, diff });
+      else if (actual != null) stockOk.push(p);
+    });
+    stockProblems.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+    const totalSales = salesInv.reduce((s, i) => s + parseFloat(i.total || 0), 0);
+    const totalPurch = purchInv.reduce((s, i) => s + parseFloat(i.total || 0), 0);
+    const treasuryBalance = treasuryIn - treasuryOut;
+    const problems = stockProblems.length + salesNoTreasury.length + purchNoTreasury.length + neverBought.length;
+
+    const cardStyle = (color) => `background:#fff;border-radius:14px;padding:16px;text-align:center;border:2px solid ${color};flex:1;min-width:140px`;
+
+    let html = `
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:22px">
+        <div style="${cardStyle(problems > 0 ? 'var(--danger)' : 'var(--success)')}">
+          <div style="font-size:1.9rem;font-weight:800;font-family:'Playfair Display',serif;color:${problems > 0 ? 'var(--danger)' : 'var(--success)'}">${problems}</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:4px;font-weight:600">مشكلة مكتشفة</div>
+        </div>
+        <div style="${cardStyle('var(--info,#2980b9)')}">
+          <div style="font-size:1.5rem;font-weight:800;font-family:'Playfair Display',serif;color:#2980b9">${salesInv.length}</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:4px;font-weight:600">فاتورة بيع</div>
+        </div>
+        <div style="${cardStyle('var(--warn,#f39c12)')}">
+          <div style="font-size:1.5rem;font-weight:800;font-family:'Playfair Display',serif;color:#f39c12">${purchInv.length}</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:4px;font-weight:600">فاتورة شراء</div>
+        </div>
+        <div style="${cardStyle(treasuryBalance >= 0 ? 'var(--success)' : 'var(--danger)')}">
+          <div style="font-size:1.3rem;font-weight:800;font-family:'Playfair Display',serif;color:${treasuryBalance >= 0 ? 'var(--success)' : 'var(--danger)'}">${fmtN(treasuryBalance)}</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:4px;font-weight:600">رصيد الخزينة (ج.م)</div>
+        </div>
+        <div style="${cardStyle('var(--success)')}">
+          <div style="font-size:1.3rem;font-weight:800;font-family:'Playfair Display',serif;color:var(--success)">${fmtN(totalSales)}</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:4px;font-weight:600">إجمالي المبيعات</div>
+        </div>
+        <div style="${cardStyle('#f39c12')}">
+          <div style="font-size:1.3rem;font-weight:800;font-family:'Playfair Display',serif;color:#f39c12">${fmtN(totalPurch)}</div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:4px;font-weight:600">إجمالي المشتريات</div>
+        </div>
+      </div>
+    `;
+
+    if (problems === 0) {
+      html += `<div style="background:#e8f8ed;border:1.5px solid var(--success);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:10px;font-size:.88rem;color:#155724;margin-bottom:16px">✅ <strong>المخزون سليم! مفيش فروقات أو مشاكل مكتشفة.</strong></div>`;
+    }
+
+    function auditSec(icon, title, badge, badgeColor, body) {
+      return `<div style="background:#fff;border-radius:16px;padding:18px;margin-bottom:18px;box-shadow:0 2px 12px rgba(232,77,138,.08)">
+        <div style="display:flex;align-items:center;gap:8px;font-size:1rem;font-weight:800;color:var(--deep);margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border2)">
+          <span style="font-size:1.3rem">${icon}</span>${title}
+          <span style="background:${badgeColor}20;color:${badgeColor};border:1px solid ${badgeColor}40;border-radius:20px;padding:2px 10px;font-size:.7rem;font-weight:700;margin-right:4px">${badge}</span>
+        </div>${body}</div>`;
+    }
+
+    function auditTable(headers, rows) {
+      return `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:.82rem">
+        <thead><tr>${headers.map(h=>`<th style="background:var(--dark);color:var(--gd);padding:8px 10px;text-align:right;font-weight:700">${h}</th>`).join('')}</tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+    }
+
+    // ── 1. فروقات المخزون
+    if (stockProblems.length > 0) {
+      const rows = stockProblems.map(p => {
+        const bg = p.diff < 0 ? '#fef2f2' : '#fefdf0';
+        let reason = p.diff < 0 && p.calcSold > p.calcBought ? '⚠️ مباع أكتر من المشتري' :
+                     p.diff < 0 ? '🔴 بيع غير مسجل أو تعديل يدوي' : '🟡 شراء غير مسجل أو إضافة يدوية';
+        return `<tr style="background:${bg}" id="audit-row-${p.id}">
+          <td style="padding:8px 10px"><strong>${p.name}</strong>${p.sku ? `<br><span style="font-size:.65rem;background:var(--gd-pale);border:1px solid var(--gd);border-radius:5px;padding:1px 6px;font-weight:700;color:#7a5000">${p.sku}</span>` : ''}</td>
+          <td style="padding:8px 10px;font-weight:700" id="audit-actual-${p.id}">${p.stock_qty}</td>
+          <td style="padding:8px 10px;color:var(--success);font-weight:700">${p.calcBought}</td>
+          <td style="padding:8px 10px;color:var(--danger);font-weight:700">${p.calcSold}</td>
+          <td style="padding:8px 10px;font-weight:700">${p.expected}</td>
+          <td style="padding:8px 10px;font-weight:800;color:${p.diff > 0 ? 'var(--success)' : 'var(--danger)'}">${p.diff > 0 ? '+' : ''}${p.diff}</td>
+          <td style="padding:8px 10px;font-size:.75rem">${reason}</td>
+          <td style="padding:8px 10px">
+            <button onclick="auditFixStock('${p.id}','${p.name.replace(/'/g,"\'")}',${p.expected})" id="audit-fix-btn-${p.id}"
+              style="background:var(--success);color:#fff;border:none;border-radius:10px;padding:5px 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Tajawal',sans-serif;transition:.2s"
+              onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+              ✅ تصحيح → ${p.expected}
+            </button>
+          </td>
+        </tr>`;
+      }).join('');
+      const note = `<div style="background:var(--pk-pale);border-right:3px solid var(--pk);border-radius:8px;padding:10px 14px;font-size:.82rem;margin-bottom:12px;line-height:1.7">
+        <strong>إزاي بنحسب؟</strong> المتوقع = مجموع كميات فواتير الشراء − مجموع كميات فواتير البيع. أي فرق = مشكلة.
+      </div>`;
+      const fixAllProblemsBtn = `<button id="audit-fix-all-btn" onclick="auditFixAll(${JSON.stringify(stockProblems.map(p=>({id:p.id,expected:p.expected})))}, ${JSON.stringify(neverBought.map(p=>({id:p.id,expected:0})))})"
+        style="background:var(--success);color:#fff;border:none;border-radius:12px;padding:8px 20px;font-size:.82rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;margin-bottom:14px;display:flex;align-items:center;gap:6px"
+        onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        ✅ تصحيح الكل دفعة واحدة (${stockProblems.length + neverBought.length} منتج)
+      </button>`;
+      html += auditSec('📦', 'فروقات المخزون', stockProblems.length + ' منتج', '#e74c3c',
+        fixAllProblemsBtn + note + auditTable(['المنتج','رصيد فعلي','مشتري','مباع','متوقع','الفرق','التفسير','تصحيح'], rows));
+    }
+
+    // ── 2. رصيد بدون فواتير شراء
+    if (neverBought.length > 0) {
+      const rows = neverBought.map(p => `<tr style="background:#fefdf0" id="audit-row-nb-${p.id}">
+        <td style="padding:8px 10px"><strong>${p.name}</strong></td>
+        <td style="padding:8px 10px">${p.sku ? `<span style="font-size:.65rem;background:var(--gd-pale);border:1px solid var(--gd);border-radius:5px;padding:1px 6px;font-weight:700">${p.sku}</span>` : '—'}</td>
+        <td style="padding:8px 10px;font-weight:700" id="audit-actual-nb-${p.id}">${p.stock_qty}</td>
+        <td style="padding:8px 10px">${fmtN(p.price)} ج.م</td>
+        <td style="padding:8px 10px;font-size:.76rem">📋 سجّل فاتورة شراء أو راجع إدخال المخزون</td>
+        <td style="padding:8px 10px">
+          <button onclick="auditFixStock('${p.id}','${p.name.replace(/'/g,"\'")}',0)" id="audit-fix-btn-nb-${p.id}"
+            style="background:#f39c12;color:#fff;border:none;border-radius:10px;padding:5px 12px;font-size:.75rem;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Tajawal',sans-serif"
+            onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+            🔄 صفّر → 0
+          </button>
+        </td>
+      </tr>`).join('');
+      html += auditSec('🤔', 'رصيد موجود بدون فواتير شراء', neverBought.length + ' منتج', '#f39c12',
+        `<div style="background:#fef9e7;border:1px solid #f39c12;border-radius:8px;padding:10px 14px;font-size:.82rem;margin-bottom:12px">
+          ⚠️ المنتجات دي عندها كمية في المخزون بس مفيش فاتورة شراء مسجلة ليها.
+        </div>` + auditTable(['المنتج','SKU','الرصيد','السعر','الإجراء','تصحيح'], rows));
+    }
+
+    // ── 3. فواتير بيع بدون خزينة
+    if (salesNoTreasury.length > 0) {
+      const total = salesNoTreasury.reduce((s,i) => s + parseFloat(i.total||0), 0);
+      const rows = salesNoTreasury.map(si => `<tr style="background:#fef2f2">
+        <td style="padding:8px 10px"><strong>${si.inv_number}</strong></td>
+        <td style="padding:8px 10px">${si.client || '—'}</td>
+        <td style="padding:8px 10px">${fmtDate(si.date || si.created_at)}</td>
+        <td style="padding:8px 10px;color:var(--success);font-weight:700">${fmtN(si.total)} ج.م</td>
+        <td style="padding:8px 10px">${si.payment_method || '—'}</td>
+      </tr>`).join('');
+      const footer = `<tr style="background:var(--gd-pale)"><td colspan="3" style="padding:8px 10px"><strong>الإجمالي</strong></td><td colspan="2" style="padding:8px 10px"><strong>${fmtN(total)} ج.م</strong></td></tr>`;
+      html += auditSec('💰', 'فواتير بيع بدون قيد في الخزينة', salesNoTreasury.length + ' فاتورة', '#e74c3c',
+        `<div style="background:#fde8e8;border:1px solid var(--danger);border-radius:8px;padding:10px 14px;font-size:.82rem;margin-bottom:12px">
+          🔴 الفواتير دي طريقة دفعها مش آجل بس مفيش قيد خزينة — ده ممكن يكون سبب فروق الخزينة.
+        </div>` + auditTable(['رقم الفاتورة','العميل','التاريخ','الإجمالي','طريقة الدفع'], rows + footer));
+    }
+
+    // ── 4. فواتير شراء بدون خزينة
+    if (purchNoTreasury.length > 0) {
+      const total = purchNoTreasury.reduce((s,i) => s + parseFloat(i.total||0), 0);
+      const rows = purchNoTreasury.map(pi => `<tr style="background:#fefdf0">
+        <td style="padding:8px 10px"><strong>${pi.pi_number}</strong></td>
+        <td style="padding:8px 10px">${pi.supplier || '—'}</td>
+        <td style="padding:8px 10px">${fmtDate(pi.date || pi.created_at)}</td>
+        <td style="padding:8px 10px;color:var(--danger);font-weight:700">${fmtN(pi.total)} ج.م</td>
+        <td style="padding:8px 10px">${pi.payment_method || '—'}</td>
+      </tr>`).join('');
+      const footer = `<tr style="background:var(--gd-pale)"><td colspan="3" style="padding:8px 10px"><strong>الإجمالي</strong></td><td colspan="2" style="padding:8px 10px"><strong>${fmtN(total)} ج.م</strong></td></tr>`;
+      html += auditSec('🛒', 'فواتير شراء بدون قيد في الخزينة', purchNoTreasury.length + ' فاتورة', '#f39c12',
+        `<div style="background:#fef9e7;border:1px solid #f39c12;border-radius:8px;padding:10px 14px;font-size:.82rem;margin-bottom:12px">
+          ⚠️ الفواتير دي طريقة دفعها مش آجل بس مفيش مصروف في الخزينة — ده بيخلي رصيد الخزينة يبان أعلى من الحقيقي.
+        </div>` + auditTable(['رقم الفاتورة','المورد','التاريخ','الإجمالي','طريقة الدفع'], rows + footer));
+    }
+
+    // ── 5. ملخص الخزينة
+    const salesTreasuryGap = Math.abs(treasuryIn - totalSales);
+    html += auditSec('🏦', 'ملخص الخزينة', '', '#2980b9', `
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div style="flex:1;min-width:120px;background:var(--bg);border-radius:12px;padding:12px;text-align:center;border:1px solid var(--border2)">
+          <div style="font-size:1.2rem;font-weight:800;color:var(--success)">${fmtN(treasuryIn)}</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:3px">محصّل بيع</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--bg);border-radius:12px;padding:12px;text-align:center;border:1px solid var(--border2)">
+          <div style="font-size:1.2rem;font-weight:800;color:#f39c12">${fmtN(treasuryOut)}</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:3px">مصروف شراء</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--bg);border-radius:12px;padding:12px;text-align:center;border:1px solid var(--border2)">
+          <div style="font-size:1.2rem;font-weight:800;color:${treasuryBalance>=0?'var(--success)':'var(--danger)'}">${fmtN(treasuryBalance)}</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:3px">الرصيد الصافي</div>
+        </div>
+        <div style="flex:1;min-width:120px;background:var(--bg);border-radius:12px;padding:12px;text-align:center;border:1px solid var(--border2)">
+          <div style="font-size:1.2rem;font-weight:800;color:#2980b9">${treasury.length}</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:3px">قيد في الخزينة</div>
+        </div>
+      </div>
+      ${salesTreasuryGap > 1 ?
+        `<div style="background:#fef9e7;border:1.5px solid #f39c12;border-radius:10px;padding:12px 16px;font-size:.83rem;line-height:1.7">
+          ⚠️ <strong>فرق بين إجمالي فواتير البيع والخزينة:</strong><br>
+          إجمالي الفواتير: <strong>${fmtN(totalSales)} ج.م</strong> — محصّل في الخزينة: <strong>${fmtN(treasuryIn)} ج.م</strong><br>
+          الفرق: <strong>${fmtN(salesTreasuryGap)} ج.م</strong> — ممكن يكون بيع آجل أو فواتير بدون قيد.
+        </div>` :
+        `<div style="background:#e8f8ed;border:1.5px solid var(--success);border-radius:10px;padding:12px 16px;font-size:.83rem">✅ إجمالي المبيعات متطابق مع الخزينة تقريباً.</div>`
+      }
+    `);
+
+    // ── 6. المنتجات السليمة
+    if (stockOk.length > 0) {
+      const rows = stockOk.map(p => `<tr>
+        <td style="padding:7px 10px">${p.name}</td>
+        <td style="padding:7px 10px;color:var(--success);font-weight:700">${p.stock_qty}</td>
+        <td style="padding:7px 10px">${prodMap[p.id]?.calcBought||0}</td>
+        <td style="padding:7px 10px">${prodMap[p.id]?.calcSold||0}</td>
+      </tr>`).join('');
+      html += auditSec('✅', 'منتجات المخزون سليم', stockOk.length + ' منتج', '#27ae60',
+        auditTable(['المنتج','الرصيد','مشتري','مباع'], rows));
+    }
+
+    html += `<div style="text-align:center;padding:16px 0;font-size:.72rem;color:var(--muted)">🕐 تم التحليل في ${new Date().toLocaleString('ar-EG')} — October Rose Audit</div>`;
+
+    document.getElementById('audit-loading').style.display = 'none';
+    document.getElementById('audit-results').innerHTML = html;
+    document.getElementById('audit-results').style.display = 'block';
+    document.getElementById('audit-run-btn').disabled = false;
+    document.getElementById('audit-run-btn').innerHTML = '🔄 إعادة المراجعة';
+
+  } catch(e) {
+    document.getElementById('audit-loading').style.display = 'none';
+    document.getElementById('audit-intro').style.display = 'none';
+    document.getElementById('audit-results').innerHTML = `<div style="background:#fde8e8;border:1.5px solid var(--danger);border-radius:12px;padding:14px 18px;font-size:.85rem;color:#721c24">⚠️ <strong>خطأ في تحميل البيانات:</strong> ${e.message}</div>`;
+    document.getElementById('audit-results').style.display = 'block';
+    document.getElementById('audit-run-btn').disabled = false;
+  }
+}
+
+// ── تصحيح كمية منتج واحد
+async function auditFixStock(prodId, prodName, correctQty) {
+  const btn = document.getElementById('audit-fix-btn-' + prodId) || document.getElementById('audit-fix-btn-nb-' + prodId);
+  if (!btn) return;
+  
+  const confirmed = confirm(`تأكيد تصحيح كمية "${prodName}" إلى ${correctQty} قطعة؟\n\nلن يتم تغيير أي فاتورة — فقط رصيد المخزون.`);
+  if (!confirmed) return;
+
+  btn.disabled = true;
+  btn.textContent = '⏳ جاري التصحيح…';
+
+  try {
+    await sbPatch('products', prodId, { stock_qty: correctQty, in_stock: correctQty > 0 });
+    // update local PRODUCTS array
+    const idx = PRODUCTS.findIndex(p => String(p.id) === String(prodId));
+    if (idx !== -1) { PRODUCTS[idx].stock_qty = correctQty; PRODUCTS[idx].in_stock = correctQty > 0; }
+    saveLocal('products', PRODUCTS);
+
+    // Update UI row
+    const actualEl = document.getElementById('audit-actual-' + prodId) || document.getElementById('audit-actual-nb-' + prodId);
+    if (actualEl) actualEl.textContent = correctQty;
+
+    const row = document.getElementById('audit-row-' + prodId) || document.getElementById('audit-row-nb-' + prodId);
+    if (row) {
+      row.style.background = '#e8f8ed';
+      row.style.opacity = '.7';
+    }
+
+    btn.style.background = '#888';
+    btn.textContent = '✔ تم التصحيح';
+    toast('✅ تم تصحيح كمية "' + prodName + '" إلى ' + correctQty);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = '❌ فشل — أعد المحاولة';
+    btn.style.background = 'var(--danger)';
+    toast('⚠️ خطأ: ' + e.message);
+  }
+}
+
+// ── تصحيح كل الفروقات دفعة واحدة
+async function auditFixAll(problems, neverBought) {
+  const total = problems.length + neverBought.length;
+  if (total === 0) return;
+  const confirmed = confirm(`تصحيح كمية ${total} منتج دفعة واحدة؟\n\nلن يتم تغيير أي فاتورة — فقط أرصدة المخزون.`);
+  if (!confirmed) return;
+
+  const fixAllBtn = document.getElementById('audit-fix-all-btn');
+  if (fixAllBtn) { fixAllBtn.disabled = true; fixAllBtn.textContent = '⏳ جاري التصحيح…'; }
+
+  let done = 0, failed = 0;
+  for (const p of [...problems, ...neverBought]) {
+    const qty = p.expected != null ? p.expected : 0;
+    try {
+      await sbPatch('products', p.id, { stock_qty: qty, in_stock: qty > 0 });
+      const idx = PRODUCTS.findIndex(x => String(x.id) === String(p.id));
+      if (idx !== -1) { PRODUCTS[idx].stock_qty = qty; PRODUCTS[idx].in_stock = qty > 0; }
+      // Update row
+      const actualEl = document.getElementById('audit-actual-' + p.id) || document.getElementById('audit-actual-nb-' + p.id);
+      if (actualEl) actualEl.textContent = qty;
+      const row = document.getElementById('audit-row-' + p.id) || document.getElementById('audit-row-nb-' + p.id);
+      if (row) { row.style.background = '#e8f8ed'; row.style.opacity = '.7'; }
+      const btn = document.getElementById('audit-fix-btn-' + p.id) || document.getElementById('audit-fix-btn-nb-' + p.id);
+      if (btn) { btn.disabled = true; btn.style.background = '#888'; btn.textContent = '✔ تم'; }
+      done++;
+    } catch(e) { failed++; }
+  }
+
+  saveLocal('products', PRODUCTS);
+  if (fixAllBtn) { fixAllBtn.disabled = true; fixAllBtn.textContent = `✔ تم تصحيح ${done} منتج`; fixAllBtn.style.background = '#888'; }
+  toast(failed === 0 ? `✅ تم تصحيح ${done} منتج بنجاح` : `⚠️ تم ${done} ونجح — فشل ${failed}`);
 }
 
 window.addEventListener('DOMContentLoaded', init);
