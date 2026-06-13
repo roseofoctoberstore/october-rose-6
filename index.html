@@ -80,10 +80,6 @@ a{text-decoration:none;color:inherit;}
   0%   { background-position: -400px 0; }
   100% { background-position: 400px 0; }
 }
-@keyframes _btnShimmer {
-  0%   { transform: translateX(-100%); }
-  40%,100% { transform: translateX(200%); }
-}
 
 /* ── PRODUCT CARD: appears with fade — stagger done via JS inline style ── */
 .prod-card {
@@ -1398,6 +1394,169 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
 
 
 
+/* ══ BACKUP PANEL ══ */
+.bkp-btn-pk{
+  background:linear-gradient(135deg,var(--pk),var(--pk2));
+  color:#fff;border:none;border-radius:12px;
+  padding:11px 18px;font-size:.84rem;font-weight:700;
+  font-family:'Tajawal',sans-serif;cursor:pointer;
+  transition:transform .15s cubic-bezier(.23,1,.32,1),box-shadow .15s;
+  box-shadow:0 4px 14px rgba(232,77,138,.25);
+}
+.bkp-btn-pk:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(232,77,138,.38);}
+.bkp-btn-pk:active{transform:scale(.97);}
+.bkp-btn-outline{
+  background:transparent;border:1.5px solid var(--border);color:var(--deep);
+  border-radius:12px;padding:9px 16px;font-size:.82rem;font-weight:600;
+  font-family:'Tajawal',sans-serif;cursor:pointer;
+  transition:border-color .2s,background .2s,transform .15s;
+}
+.bkp-btn-outline:hover{border-color:var(--pk);background:var(--pk-pale);transform:translateY(-1px);}
+.bkp-btn-outline:active{transform:scale(.97);}
+.bkp-card{transition:transform .2s cubic-bezier(.23,1,.32,1),box-shadow .2s;}
+.bkp-card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(232,77,138,.12)!important;}
+#bkp-drop-zone:hover{border-color:var(--pk);background:var(--pk-pale);}
+#bkp-drop-zone.drag-over{border-color:var(--pk);background:var(--pk-pale);transform:scale(1.02);}
+.bkp-stat-pill{
+  background:var(--bg);border-radius:12px;padding:12px 14px;text-align:center;
+  border:1.5px solid var(--border);
+}
+.bkp-stat-pill .sp-num{font-size:1.3rem;font-weight:800;color:var(--pk);}
+.bkp-stat-pill .sp-lbl{font-size:.7rem;color:var(--muted);margin-top:2px;}
+.bkp-hist-row{
+  display:flex;align-items:center;gap:12px;padding:11px 14px;
+  border-radius:12px;background:var(--bg);margin-bottom:8px;
+  transition:background .2s;
+}
+.bkp-hist-row:hover{background:var(--pk-pale);}
+.bkp-hist-row .hr-icon{font-size:1.2rem;flex-shrink:0;}
+.bkp-hist-row .hr-info{flex:1;min-width:0;}
+.bkp-hist-row .hr-date{font-size:.78rem;font-weight:700;color:var(--deep);}
+.bkp-hist-row .hr-meta{font-size:.68rem;color:var(--muted);margin-top:2px;}
+.bkp-hist-row .hr-actions{display:flex;gap:6px;flex-shrink:0;}
+.bkp-hist-row .hr-dl{background:var(--gd-pale);border:1px solid var(--gd);color:#7a5000;border-radius:8px;padding:4px 10px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:'Tajawal',sans-serif;transition:.15s;}
+.bkp-hist-row .hr-dl:hover{background:var(--gd);color:#fff;}
+.bkp-hist-row .hr-del{background:#fff0f2;border:1px solid #f5b8cc;color:#a00030;border-radius:8px;padding:4px 8px;font-size:.72rem;cursor:pointer;font-family:'Tajawal',sans-serif;transition:.15s;}
+.bkp-hist-row .hr-del:hover{background:#e74c3c;color:#fff;}
+@media(max-width:600px){
+  #dt-backup .bkp-grid-2{grid-template-columns:1fr!important;}
+}
+
+/* ══ EMIL DESIGN UPGRADES — precise easing curves ══ */
+:root {
+  --ease-out-quart: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out-quart: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Override existing popIn — snappier, more intentional */
+@keyframes popIn {
+  0%   { transform: scale(0.94) translateY(14px); opacity: 0; }
+  65%  { transform: scale(1.018) translateY(-2px); opacity: 1; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Dash panel slide in from bottom — drawer feel */
+.dash-panel.open {
+  animation: dashSlideIn 0.32s var(--ease-drawer) both;
+}
+@keyframes dashSlideIn {
+  from { transform: translateY(18px); opacity: 0.7; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* Product cards — Emil: scale + shadow compound */
+.prod-card {
+  transition: transform 0.2s var(--ease-out-quart),
+              box-shadow 0.2s var(--ease-out-quart);
+}
+@media (hover: hover) and (pointer: fine) {
+  .prod-card:hover {
+    transform: translateY(-4px) scale(1.008);
+  }
+}
+.prod-card:active {
+  transform: scale(0.97) !important;
+  transition-duration: 0.1s !important;
+}
+
+/* Category cards — Emil: instant feedback */
+.cat-card {
+  transition: transform 0.18s var(--ease-out-quart),
+              box-shadow 0.18s var(--ease-out-quart),
+              background 0.18s ease;
+}
+@media (hover: hover) and (pointer: fine) {
+  .cat-card:hover { transform: translateY(-3px) scale(1.02); }
+}
+.cat-card:active { transform: scale(0.96) !important; }
+
+/* Buttons — Emil: ≤160ms active state */
+.p-add, .btn-pk, .bkp-btn-pk {
+  transition: transform 0.14s var(--ease-out-quart),
+              box-shadow 0.14s var(--ease-out-quart),
+              background 0.14s ease;
+}
+.p-add:active, .btn-pk:active { transform: scale(0.96) !important; }
+
+/* Toast — asymmetric: enter fast, exit slower */
+@keyframes toastIn {
+  from { transform: translateY(50px) scale(0.92); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes toastOut {
+  from { transform: translateY(0) scale(1); opacity: 1; }
+  to   { transform: translateY(60px) scale(0.9); opacity: 0; }
+}
+
+/* Header search focus — Emil: subtle glow instead of just border */
+.search-wrap:focus-within {
+  border-color: var(--gd);
+  box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.15);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+/* Sidebar nav buttons — Emil: left accent bar on active */
+.dash-nav-btn {
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s var(--ease-out-quart);
+}
+.dash-nav-btn:active { transform: scale(0.97); }
+.dash-nav-btn.ac {
+  position: relative;
+}
+.dash-nav-btn.ac::before {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 20%;
+  height: 60%;
+  width: 3px;
+  background: var(--pk);
+  border-radius: 2px 0 0 2px;
+}
+
+/* Backup history rows — stagger on init */
+.bkp-hist-row {
+  animation: fadeInUp 0.28s var(--ease-out-quart) both;
+}
+.bkp-hist-row:nth-child(1) { animation-delay: 0.03s; }
+.bkp-hist-row:nth-child(2) { animation-delay: 0.07s; }
+.bkp-hist-row:nth-child(3) { animation-delay: 0.11s; }
+.bkp-hist-row:nth-child(4) { animation-delay: 0.15s; }
+.bkp-hist-row:nth-child(5) { animation-delay: 0.19s; }
+
+/* Stat pills — hover scale */
+.bkp-stat-pill {
+  transition: transform 0.15s var(--ease-out-quart), box-shadow 0.15s;
+}
+.bkp-stat-pill:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(232,77,138,.12); }
+
+/* Loading screen logo — Emil: subtle pulse not jarring */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(0.97); }
+}
+
 </style>
 </head>
 <body>
@@ -1970,6 +2129,10 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
       <button class="dash-nav-btn dash-mgr-only" data-tab="dt-img-compress" onclick="swDashNav('dt-img-compress',this);initImgCompress()">
         <span class="dnb-icon">🗜️</span><span>ضغط الصور</span>
       </button>
+      <div class="dash-sidebar-section dash-mgr-only">النسخ الاحتياطي</div>
+      <button class="dash-nav-btn dash-mgr-only" data-tab="dt-backup" onclick="swDashNav('dt-backup',this);initBackupPanel()">
+        <span class="dnb-icon">💾</span><span>نسخ واسترجاع</span>
+      </button>
     </div>
 
     <!-- Main Content -->
@@ -1990,6 +2153,7 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
         <button class="dmt-btn dash-mgr-only" onclick="swDashNav('dt-audit',this)" data-tab="dt-audit">🔍 المراجعة</button>
         <button class="dmt-btn" onclick="swDashNav('dt-posts',this)" data-tab="dt-posts">🌹 البوستات</button>
         <button class="dmt-btn dash-mgr-only" onclick="swDashNav('dt-img-compress',this);initImgCompress()" data-tab="dt-img-compress">🗜️ ضغط الصور</button>
+        <button class="dmt-btn dash-mgr-only" onclick="swDashNav('dt-backup',this);initBackupPanel()" data-tab="dt-backup">💾 نسخ احتياطي</button>
       </div>
       <div class="dash-content-inner">
         <!-- keep old dash-body id for compatibility -->
@@ -2136,7 +2300,7 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button onclick="saveInvOnly()" style="background:var(--success);color:#fff;border:none;border-radius:16px;padding:7px 16px;font-size:.82rem;font-weight:700;cursor:pointer">💾 حفظ الفاتورة</button>
               <button onclick="printInvoice()" style="background:var(--pk);color:#fff;border:none;border-radius:16px;padding:7px 16px;font-size:.82rem;font-weight:700;cursor:pointer">🖨️ طباعة / PDF</button>
-              <button onclick="resetInvForm()" id="btn-new-inv" style="background:linear-gradient(135deg,var(--deep),#3d0a22);color:var(--gd);border:1.5px solid rgba(212,160,23,0.4);border-radius:16px;padding:7px 16px;font-size:.82rem;font-weight:700;cursor:pointer;transition:all 0.22s cubic-bezier(0.23,1,0.32,1);position:relative;overflow:hidden" onmouseenter="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(212,160,23,0.3)';this.style.borderColor='var(--gd)'" onmouseleave="this.style.transform='';this.style.boxShadow='';this.style.borderColor='rgba(212,160,23,0.4)'" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform='translateY(-2px)'">✦ فاتورة جديدة<span style="position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(212,160,23,0.12),transparent);transform:translateX(-100%);animation:_btnShimmer 2.5s ease infinite" class="_shimmer-span"></span></button>
+              <button onclick="resetInvForm()" style="background:var(--muted);color:#fff;border:none;border-radius:16px;padding:7px 14px;font-size:.82rem;font-weight:700;cursor:pointer">🆕 فاتورة جديدة</button>
             </div>
           </div>
           <!-- إضافة جميع الأصناف -->
@@ -2949,6 +3113,100 @@ button,.nlink,.cat-card,.prod-card,.hdr-btn,.p-add{
           </div>
         </div>
       </div><!-- /dt-img-compress -->
+
+      <!-- TAB: BACKUP نسخ احتياطي واسترجاع -->
+      <div id="dt-backup" class="dash-tab-panel">
+        <div style="padding:24px 20px;max-width:760px;margin:0 auto">
+
+          <!-- Header -->
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px">
+            <div style="width:52px;height:52px;border-radius:16px;background:linear-gradient(135deg,var(--pk),var(--pk2));display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;box-shadow:0 4px 16px rgba(232,77,138,.35)">💾</div>
+            <div>
+              <h2 style="font-size:1.2rem;font-weight:800;color:var(--deep);margin:0">النسخ الاحتياطي والاسترجاع</h2>
+              <p style="font-size:.8rem;color:var(--muted);margin:4px 0 0">احفظ بياناتك بأمان — استرجعها في أي وقت</p>
+            </div>
+          </div>
+
+          <!-- Status Bar -->
+          <div id="bkp-status-bar" style="display:none;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;margin-bottom:20px;font-size:.82rem;font-weight:700;transition:all .3s"></div>
+
+          <!-- Cards Row -->
+          <div class="bkp-grid-2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+
+            <!-- Export Card -->
+            <div class="bkp-card" style="background:#fff;border-radius:18px;padding:22px 20px;border:1.5px solid var(--border);box-shadow:var(--shadow)">
+              <div style="font-size:1.6rem;margin-bottom:10px">📤</div>
+              <div style="font-size:.95rem;font-weight:800;color:var(--deep);margin-bottom:6px">تصدير نسخة احتياطية</div>
+              <p style="font-size:.76rem;color:var(--muted);line-height:1.6;margin-bottom:16px">تحميل ملف JSON يحتوي على كل المنتجات والإعدادات والطلبات</p>
+              <div style="display:flex;flex-direction:column;gap:8px">
+                <button class="bkp-btn-pk" onclick="backupExport('full')">💾 نسخة كاملة</button>
+                <button class="bkp-btn-outline" onclick="backupExport('products')">📦 المنتجات فقط</button>
+                <button class="bkp-btn-outline" onclick="backupExport('orders')">📋 الطلبات فقط</button>
+              </div>
+            </div>
+
+            <!-- Import Card -->
+            <div class="bkp-card" style="background:#fff;border-radius:18px;padding:22px 20px;border:1.5px solid var(--border);box-shadow:var(--shadow)">
+              <div style="font-size:1.6rem;margin-bottom:10px">📥</div>
+              <div style="font-size:.95rem;font-weight:800;color:var(--deep);margin-bottom:6px">استرجاع من ملف</div>
+              <p style="font-size:.76rem;color:var(--muted);line-height:1.6;margin-bottom:16px">استعادة البيانات من ملف نسخة احتياطية محفوظة مسبقاً</p>
+              <div id="bkp-drop-zone" onclick="document.getElementById('bkp-file-input').click()" style="border:2px dashed var(--border);border-radius:12px;padding:18px 12px;text-align:center;cursor:pointer;transition:all .25s;background:var(--bg)">
+                <div style="font-size:1.4rem;margin-bottom:4px">📂</div>
+                <div style="font-size:.75rem;color:var(--muted);font-weight:600">اضغط لاختيار ملف</div>
+                <div style="font-size:.68rem;color:var(--border);margin-top:2px">JSON فقط</div>
+              </div>
+              <input type="file" id="bkp-file-input" accept=".json" style="display:none" onchange="backupReadFile(this)">
+            </div>
+          </div>
+
+          <!-- Preview Section (shown after file read) -->
+          <div id="bkp-preview-wrap" style="display:none;background:#fff;border-radius:18px;padding:22px;border:1.5px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+              <div>
+                <div style="font-size:.95rem;font-weight:800;color:var(--deep)">📋 محتوى الملف</div>
+                <div id="bkp-file-meta" style="font-size:.75rem;color:var(--muted);margin-top:3px"></div>
+              </div>
+              <button onclick="document.getElementById('bkp-preview-wrap').style.display='none';document.getElementById('bkp-file-input').value=''" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:5px 12px;font-size:.75rem;font-family:'Tajawal',sans-serif;cursor:pointer">✕ إلغاء</button>
+            </div>
+
+            <div id="bkp-preview-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;margin-bottom:18px"></div>
+
+            <!-- Restore options -->
+            <div style="background:var(--bg);border-radius:12px;padding:14px;margin-bottom:16px">
+              <div style="font-size:.78rem;font-weight:700;color:var(--deep);margin-bottom:10px">🔧 خيارات الاسترجاع</div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--deep);cursor:pointer;margin-bottom:8px">
+                <input type="checkbox" id="bkp-restore-products" checked style="accent-color:var(--pk);width:16px;height:16px">
+                <span>📦 استرجاع المنتجات</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--deep);cursor:pointer;margin-bottom:8px">
+                <input type="checkbox" id="bkp-restore-settings" checked style="accent-color:var(--pk);width:16px;height:16px">
+                <span>⚙️ استرجاع الإعدادات</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;font-size:.8rem;color:var(--deep);cursor:pointer">
+                <input type="checkbox" id="bkp-restore-orders" style="accent-color:var(--pk);width:16px;height:16px">
+                <span>📋 استرجاع الطلبات (خطر — تحل محل الموجودة)</span>
+              </label>
+            </div>
+
+            <button class="bkp-btn-pk" id="bkp-restore-btn" onclick="backupRestore()" style="width:100%">
+              🔄 استرجاع الآن
+            </button>
+          </div>
+
+          <!-- Auto Backup History -->
+          <div style="background:#fff;border-radius:18px;padding:22px;border:1.5px solid var(--border);box-shadow:var(--shadow)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+              <div style="font-size:.95rem;font-weight:800;color:var(--deep)">🕐 النسخ المحفوظة محلياً</div>
+              <button onclick="backupAutoSave()" class="bkp-btn-outline" style="font-size:.75rem;padding:6px 14px">+ حفظ الآن</button>
+            </div>
+            <div id="bkp-history-list" style="font-size:.8rem;color:var(--muted);text-align:center;padding:20px 0">
+              ⏳ جارٍ التحميل...
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /dt-backup -->
+
     </div><!-- /dash-content-inner -->
     </div><!-- /dash-content -->
   </div><!-- /dash-layout -->
@@ -4742,19 +5000,57 @@ function galNav(dir) {
   galRender();
 }
 
-function readFile(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result); r.onerror=rej; r.readAsDataURL(file); }); }
+// ══ ضغط الصور قبل الرفع — يقلل الحجم بنسبة 70-90% ══
+function compressImage(file, maxW, maxH, quality) {
+  maxW = maxW || 900;
+  maxH = maxH || 900;
+  quality = quality || 0.72;
+  return new Promise(function(resolve, reject) {
+    const reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onerror = reject;
+      img.onload = function() {
+        let w = img.width, h = img.height;
+        if (w > maxW || h > maxH) {
+          const ratio = Math.min(maxW / w, maxH / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0, w, h);
+        // اختر أفضل تنسيق — webp أصغر لو الجهاز يدعمه
+        const fmt = canvas.toDataURL('image/webp', quality).startsWith('data:image/webp')
+          ? 'image/webp' : 'image/jpeg';
+        resolve(canvas.toDataURL(fmt, quality));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+function readFile(file){ return compressImage(file); }
 
 async function galAddImgs(input) {
   const files=Array.from(input.files); if(!files.length) return;
-  toast('⏳ جارٍ رفع الصور...');
-  for(const f of files){ const d=await readFile(f); galImgs.push(d); }
+  toast('⏳ جارٍ ضغط الصور ورفعها...');
+  for(const f of files){
+    try { const d=await compressImage(f, 900, 900, 0.72); galImgs.push(d); }
+    catch(e){ console.warn('فشل ضغط الصورة، يُستخدم الأصل:', e); const d=await new Promise((res,rej)=>{const r=new FileReader();r.onload=ev=>res(ev.target.result);r.onerror=rej;r.readAsDataURL(f);});galImgs.push(d); }
+  }
   galIdx=galImgs.length-1;
   try {
     const p=PRODUCTS.find(x=>x.id===openProdId);
     if(p){p.images=galImgs;p.img_data=galImgs[0];}
     await sbPatch('products',openProdId,{images:galImgs,img_data:galImgs[0]});
     galRender(); renderProds(curFilter);
-    toast('✦ تم رفع '+files.length+' صورة');
+    toast('✦ تم رفع '+files.length+' صورة (مضغوطة)');
   } catch(e){toast('⚠️ خطأ في الرفع');console.error(e);}
   input.value='';
 }
@@ -4989,19 +5285,31 @@ function previewNpImgs(input) {
   const lbl = document.getElementById('np-img-lbl');
   files.forEach(f => {
     if (!f.type.startsWith('image/')) return;
-    const r = new FileReader();
-    r.onload = ev => {
-      newProdImgsData.push(ev.target.result);
-      lbl.textContent = newProdImgsData.length + ' صورة مختارة';
-      // preview thumbnail
+    // ضغط الصورة قبل الإضافة
+    compressImage(f, 900, 900, 0.72).then(compressed => {
+      newProdImgsData.push(compressed);
+      lbl.textContent = newProdImgsData.length + ' صورة مختارة (مضغوطة)';
       const wrap = document.createElement('span');
       wrap.style.cssText = 'position:relative;display:inline-block';
       const idx = newProdImgsData.length - 1;
-      wrap.innerHTML = `<img src="${ev.target.result}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:2px solid var(--pk)">
+      wrap.innerHTML = `<img src="${compressed}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:2px solid var(--pk)">
         <button type="button" onclick="removeNpImg(this,${idx})" style="position:absolute;top:-6px;left:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:1">✕</button>`;
       container.appendChild(wrap);
-    };
-    r.readAsDataURL(f);
+    }).catch(e => {
+      console.warn('فشل الضغط، سيُستخدم الأصل:', e);
+      const r = new FileReader();
+      r.onload = ev => {
+        newProdImgsData.push(ev.target.result);
+        lbl.textContent = newProdImgsData.length + ' صورة مختارة';
+        const wrap = document.createElement('span');
+        wrap.style.cssText = 'position:relative;display:inline-block';
+        const idx = newProdImgsData.length - 1;
+        wrap.innerHTML = `<img src="${ev.target.result}" style="width:56px;height:56px;object-fit:cover;border-radius:8px;border:2px solid var(--pk)">
+          <button type="button" onclick="removeNpImg(this,${idx})" style="position:absolute;top:-6px;left:-6px;background:var(--danger);color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:.65rem;cursor:pointer;line-height:1">✕</button>`;
+        container.appendChild(wrap);
+      };
+      r.readAsDataURL(f);
+    });
   });
   input.value = '';
 }
@@ -5803,10 +6111,11 @@ async function saveSettings() {
 }
 async function handleLogoUpload(input) {
   const f = input.files[0]; if (!f) return;
-  toast('⏳ جارٍ رفع اللوجو على السحابة...');
-  const r = new FileReader();
-  r.onload = async ev => {
-    const d = ev.target.result;
+  toast('⏳ جارٍ ضغط ورفع اللوجو...');
+  let d;
+  try { d = await compressImage(f, 400, 400, 0.80); }
+  catch(e) { d = await new Promise((res,rej)=>{const r2=new FileReader();r2.onload=ev=>res(ev.target.result);r2.onerror=rej;r2.readAsDataURL(f);}); }
+  {
     // تحديث فوري لكل العناصر
     const hdrLogo = document.getElementById('logo-img');
     const lsLogo  = document.getElementById('ls-logo');
@@ -5830,8 +6139,7 @@ async function handleLogoUpload(input) {
         toast('✦ تم رفع اللوجو وحفظه على السحابة ✓');
       }
     } catch(e) { toast('⚠️ خطأ في رفع اللوجو: ' + e.message); console.error(e); }
-  };
-  r.readAsDataURL(f);
+  }
 }
 
 // ══════════════════════════════════════
@@ -6921,136 +7229,10 @@ function resetPOForm() {
   document.getElementById('po-edit-label').textContent = 'أمر شراء جديد';
   initPORows();
 }
-function resetInvForm(skipConfirm) {
-  // لو في بيانات مدخلة، اطلب تأكيد بـ modal أنيق
-  const hasData = (document.getElementById('inv-client')?.value || '').trim() ||
-                  (document.getElementById('inv-rows')?.querySelectorAll('tr').length > 0);
-  if (hasData && !skipConfirm) {
-    _showNewInvConfirm();
-    return;
-  }
-  // مسح كل الحقول
-  ['inv-client','inv-client-phone','inv-client-address','inv-notes','inv-shipping'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  const pay = document.getElementById('inv-payment');
-  if (pay) pay.value = 'كاش';
-
+function resetInvForm() {
   document.getElementById('inv-edit-id').value = '';
   document.getElementById('inv-edit-label').textContent = 'فاتورة بيع جديدة';
-
-  // تأثير flash على النموذج
-  const panel = document.getElementById('inv-panel-new');
-  if (panel) {
-    panel.style.transition = 'opacity 0.18s ease-out';
-    panel.style.opacity = '0.3';
-    setTimeout(() => {
-      initInvRows();
-      calcInvTotal();
-      panel.style.opacity = '1';
-    }, 180);
-  } else {
-    initInvRows();
-    calcInvTotal();
-  }
-  toast('✦ تم تصفير الفاتورة — جاهز لفاتورة جديدة');
-}
-
-function _showNewInvConfirm() {
-  // أزل أي modal قديم
-  const old = document.getElementById('_new-inv-modal');
-  if (old) old.remove();
-
-  const overlay = document.createElement('div');
-  overlay.id = '_new-inv-modal';
-  overlay.style.cssText = `
-    position:fixed;inset:0;z-index:8000;
-    display:flex;align-items:center;justify-content:center;
-    background:rgba(13,6,8,0);
-    transition:background 0.22s ease;
-    padding:16px;
-  `;
-
-  overlay.innerHTML = `
-    <div id="_new-inv-box" style="
-      background:#fff;border-radius:20px;
-      padding:32px 28px 24px;
-      max-width:360px;width:100%;
-      box-shadow:0 20px 60px rgba(13,6,8,0.35),0 4px 20px rgba(232,77,138,0.18);
-      transform:scale(0.88) translateY(20px);
-      opacity:0;
-      transition:transform 0.28s cubic-bezier(0.23,1,0.32,1), opacity 0.22s ease;
-      text-align:center;
-      border:1.5px solid var(--border2);
-      position:relative;
-    ">
-      <div style="
-        width:60px;height:60px;border-radius:50%;
-        background:linear-gradient(135deg,var(--pk-pale),var(--gd-pale));
-        display:flex;align-items:center;justify-content:center;
-        font-size:1.8rem;margin:0 auto 16px;
-        border:2px solid var(--border);
-      ">🆕</div>
-      <h3 style="font-family:'Playfair Display',serif;color:var(--deep);font-size:1.15rem;margin-bottom:8px">فاتورة جديدة؟</h3>
-      <p style="color:var(--muted);font-size:.85rem;line-height:1.6;margin-bottom:24px">
-        سيتم مسح جميع البيانات المدخلة.<br>البيانات المحفوظة في قاعدة البيانات لن تتأثر.
-      </p>
-      <div style="display:flex;gap:10px;justify-content:center">
-        <button id="_new-inv-cancel" style="
-          background:transparent;color:var(--muted);
-          border:1.5px solid var(--border);
-          border-radius:50px;padding:9px 22px;
-          font-size:.85rem;font-weight:700;cursor:pointer;
-          font-family:'Tajawal',sans-serif;
-          transition:all 0.18s ease;
-        ">إلغاء</button>
-        <button id="_new-inv-confirm" style="
-          background:linear-gradient(135deg,var(--pk),var(--pk2));
-          color:#fff;border:none;
-          border-radius:50px;padding:9px 24px;
-          font-size:.85rem;font-weight:700;cursor:pointer;
-          font-family:'Tajawal',sans-serif;
-          box-shadow:0 4px 14px rgba(232,77,138,0.35);
-          transition:all 0.18s ease;
-        ">✦ نعم، ابدأ جديد</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-
-  // Animate in
-  requestAnimationFrame(() => {
-    overlay.style.background = 'rgba(13,6,8,0.45)';
-    const box = document.getElementById('_new-inv-box');
-    requestAnimationFrame(() => {
-      box.style.transform = 'scale(1) translateY(0)';
-      box.style.opacity = '1';
-    });
-  });
-
-  function closeModal(confirmed) {
-    const box = document.getElementById('_new-inv-box');
-    overlay.style.background = 'rgba(13,6,8,0)';
-    if (box) {
-      box.style.transform = 'scale(0.92) translateY(12px)';
-      box.style.opacity = '0';
-    }
-    setTimeout(() => { overlay.remove(); if (confirmed) resetInvForm(true); }, 220);
-  }
-
-  document.getElementById('_new-inv-cancel').onclick  = () => closeModal(false);
-  document.getElementById('_new-inv-confirm').onclick = () => closeModal(true);
-  overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(false); });
-
-  // hover effects
-  const cancelBtn = document.getElementById('_new-inv-cancel');
-  const confirmBtn = document.getElementById('_new-inv-confirm');
-  cancelBtn.onmouseenter  = () => { cancelBtn.style.borderColor='var(--pk)'; cancelBtn.style.color='var(--pk)'; };
-  cancelBtn.onmouseleave  = () => { cancelBtn.style.borderColor='var(--border)'; cancelBtn.style.color='var(--muted)'; };
-  confirmBtn.onmouseenter = () => { confirmBtn.style.transform='translateY(-2px)'; confirmBtn.style.boxShadow='0 8px 22px rgba(232,77,138,0.45)'; };
-  confirmBtn.onmouseleave = () => { confirmBtn.style.transform=''; confirmBtn.style.boxShadow='0 4px 14px rgba(232,77,138,0.35)'; };
+  initInvRows();
 }
 
 // سجل أوامر الشراء
@@ -10615,5 +10797,408 @@ document.addEventListener('click', function(e) {
 })();
 
 </script>
+
+<!-- ══ PERFORMANCE PATCH: IntersectionObserver lazy-load + DOM diffing ══ -->
+<script>
+// ── 1. IntersectionObserver للصور: يُعمّق الـ lazy load ──
+(function() {
+  if (!('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (!entry.isIntersecting) return;
+      const img = entry.target;
+      if (img.dataset.src) {
+        img.src = img.dataset.src;
+        img.removeAttribute('data-src');
+        img.style.opacity = '0';
+        img.onload = function() {
+          img.style.transition = 'opacity .35s';
+          img.style.opacity = '1';
+        };
+      }
+      io.unobserve(img);
+    });
+  }, { rootMargin: '200px 0px', threshold: 0 });
+
+  // مراقبة الصور الجديدة كلما يُعاد رسم المنتجات
+  var _origRender = window.renderProds;
+  window.renderProds = function() {
+    _origRender && _origRender.apply(this, arguments);
+    // بعد الرسم — راقب كل صورة فيها data-src
+    requestAnimationFrame(function() {
+      document.querySelectorAll('img[data-src]').forEach(function(img) {
+        io.observe(img);
+      });
+    });
+  };
+})();
+
+// ── 2. مؤشر حجم الصور المضغوطة (debug) ──
+window._logImgSize = function(label, dataUrl) {
+  if (!dataUrl) return;
+  const bytes = Math.round(dataUrl.length * 0.75);
+  const kb = (bytes / 1024).toFixed(1);
+  console.log('[IMG]', label, kb, 'KB');
+};
+
+// ── 3. حماية localStorage من الامتلاء — تنظيف دوري ──
+(function() {
+  try {
+    // احذف الـ keys القديمة لو الـ storage قارب الامتلاء
+    var usage = JSON.stringify(localStorage).length;
+    if (usage > 4 * 1024 * 1024) { // > 4MB
+      // احتفظ بالأهم فقط
+      var keep = ['or6_products', 'or6_settings', 'or6_products_ts'];
+      var toDelete = [];
+      for (var i = 0; i < localStorage.length; i++) {
+        var k = localStorage.key(i);
+        if (k && !keep.includes(k)) toDelete.push(k);
+      }
+      toDelete.forEach(function(k) { try { localStorage.removeItem(k); } catch(e) {} });
+      console.log('[STORAGE] Cleaned', toDelete.length, 'old keys');
+    }
+  } catch(e) {}
+})();
+
+// ── 4. تسريع البحث بـ debounce ──
+(function() {
+  var _origPfSearch = window.pfSearch;
+  var _timer = null;
+  window.pfSearch = function() {
+    clearTimeout(_timer);
+    _timer = setTimeout(function() {
+      _origPfSearch && _origPfSearch();
+    }, 180);
+  };
+})();
+
+// ── 5. تسريع renderProds: تجنب إعادة البناء لو نفس النتيجة ──
+(function() {
+  var _lastKey = '';
+  var _origRender = window.renderProds;
+  window.renderProds = function(filter) {
+    var newKey = (filter || 'all') + '|' + (window._pfQuery || '') + '|' + (window._pfStockOnly ? '1' : '0') + '|' + (window._pfSort || 'default');
+    if (newKey === _lastKey && document.getElementById('prods-grid')?.children?.length > 0) return;
+    _lastKey = newKey;
+    _origRender && _origRender.apply(this, arguments);
+  };
+})();
+</script>
+
+<!-- ══ BACKUP & RESTORE SYSTEM ══ -->
+<script>
+(function() {
+  var BKP_KEY    = 'or6_backups';
+  var MAX_HIST   = 8;   // max local history entries
+
+  // ── Helpers ──
+  function bkpStatus(msg, type) {
+    // type: 'ok' | 'err' | 'info'
+    var bar = document.getElementById('bkp-status-bar');
+    if (!bar) return;
+    var colors = {
+      ok:   { bg:'#d4edda', border:'#27ae60', color:'#155724' },
+      err:  { bg:'#f8d7da', border:'#e74c3c', color:'#721c24' },
+      info: { bg:'#fde8f1', border:'var(--pk)', color:'var(--pk2)' }
+    };
+    var c = colors[type] || colors.info;
+    bar.style.cssText = 'display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:12px;margin-bottom:20px;font-size:.82rem;font-weight:700;background:'+c.bg+';border:1.5px solid '+c.border+';color:'+c.color;
+    bar.innerHTML = msg;
+    clearTimeout(bar._t);
+    if (type !== 'err') bar._t = setTimeout(function(){ bar.style.display='none'; }, 4500);
+  }
+
+  function bkpNow() { return new Date().toLocaleString('ar-EG'); }
+
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(BKP_KEY) || '[]'); } catch(e) { return []; }
+  }
+  function saveHistory(arr) {
+    try { localStorage.setItem(BKP_KEY, JSON.stringify(arr)); } catch(e) {
+      // storage full — drop oldest
+      arr.splice(0, 1);
+      try { localStorage.setItem(BKP_KEY, JSON.stringify(arr)); } catch(e2) {}
+    }
+  }
+
+  // ── Build backup object ──
+  async function buildBackup(mode) {
+    var obj = {
+      version: 2,
+      app: 'October Rose 6',
+      created_at: new Date().toISOString(),
+      mode: mode
+    };
+    try {
+      if (mode === 'full' || mode === 'products') {
+        var prods = await sbGet('products', 'order=created_at.desc&select=*');
+        obj.products = prods;
+        obj.product_count = prods.length;
+      }
+      if (mode === 'full' || mode === 'orders') {
+        var ords = await sbGet('orders', 'order=created_at.desc&select=*');
+        obj.orders = ords;
+        obj.order_count = ords.length;
+      }
+      if (mode === 'full') {
+        var sets = await sbGet('settings', 'limit=1');
+        obj.settings = sets[0] || {};
+        try { var staff = await sbGet('staff', 'select=*'); obj.staff = staff; } catch(e) {}
+        try { var sups  = await sbGet('suppliers', 'select=*'); obj.suppliers = sups; } catch(e) {}
+      }
+    } catch(e) {
+      throw new Error('تعذّر جلب البيانات: ' + (e.message || e));
+    }
+    return obj;
+  }
+
+  // ── Export ──
+  window.backupExport = async function(mode) {
+    bkpStatus('⏳ جارٍ تجميع البيانات...', 'info');
+    try {
+      var bkp = await buildBackup(mode);
+      var json = JSON.stringify(bkp, null, 2);
+      var labels = { full:'كاملة', products:'المنتجات', orders:'الطلبات' };
+      var date = new Date().toISOString().slice(0,10);
+      var fname = 'OR6-backup-' + labels[mode] + '-' + date + '.json';
+      var blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = fname;
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+
+      // Save to history (lightweight — no img_data)
+      var light = JSON.parse(JSON.stringify(bkp));
+      if (light.products) light.products = light.products.map(function(p){ var r={};Object.keys(p).forEach(function(k){if(k!=='img_data'&&k!=='images')r[k]=p[k];});return r; });
+      var hist = loadHistory();
+      hist.unshift({ ts: Date.now(), label: bkpNow(), mode: mode, count: { products:(bkp.products||[]).length, orders:(bkp.orders||[]).length }, data: light });
+      if (hist.length > MAX_HIST) hist.length = MAX_HIST;
+      saveHistory(hist);
+
+      bkpStatus('✅ تم تحميل النسخة الاحتياطية — ' + fname, 'ok');
+      renderBackupHistory();
+      if (window.toast) toast('💾 تم حفظ نسخة احتياطية بنجاح ✓');
+    } catch(e) {
+      bkpStatus('❌ ' + (e.message || 'خطأ غير معروف'), 'err');
+    }
+  };
+
+  // ── Auto-save to localStorage ──
+  window.backupAutoSave = async function() {
+    bkpStatus('⏳ جارٍ الحفظ المحلي...', 'info');
+    try {
+      var bkp = await buildBackup('full');
+      // Strip images for size
+      if (bkp.products) bkp.products = bkp.products.map(function(p){ var r={};Object.keys(p).forEach(function(k){if(k!=='img_data'&&k!=='images')r[k]=p[k];});return r; });
+      var hist = loadHistory();
+      hist.unshift({ ts: Date.now(), label: bkpNow(), mode: 'full', count: { products:(bkp.products||[]).length, orders:(bkp.orders||[]).length }, data: bkp });
+      if (hist.length > MAX_HIST) hist.length = MAX_HIST;
+      saveHistory(hist);
+      bkpStatus('✅ تم الحفظ المحلي — ' + bkpNow(), 'ok');
+      renderBackupHistory();
+      if (window.toast) toast('💾 نسخة محلية محفوظة ✓');
+    } catch(e) {
+      bkpStatus('❌ ' + (e.message || 'خطأ'), 'err');
+    }
+  };
+
+  // ── Read imported file ──
+  window.backupReadFile = function(input) {
+    var f = input.files[0]; if (!f) return;
+    if (!f.name.endsWith('.json')) { bkpStatus('❌ الملف يجب أن يكون JSON', 'err'); return; }
+    bkpStatus('⏳ جارٍ قراءة الملف...', 'info');
+    var r = new FileReader();
+    r.onload = function(e) {
+      try {
+        var obj = JSON.parse(e.target.result);
+        if (!obj.app || !obj.version) throw new Error('الملف غير معروف — ليس نسخة OR6');
+        window._bkpLoaded = obj;
+        // Show preview
+        var meta = document.getElementById('bkp-file-meta');
+        if (meta) meta.textContent = 'تاريخ النسخة: ' + new Date(obj.created_at).toLocaleString('ar-EG') + ' | النوع: ' + (obj.mode === 'full' ? 'كاملة' : obj.mode);
+        var statsEl = document.getElementById('bkp-preview-stats');
+        if (statsEl) {
+          var pills = [];
+          if (obj.products) pills.push('<div class="bkp-stat-pill"><div class="sp-num">'+obj.products.length+'</div><div class="sp-lbl">📦 منتج</div></div>');
+          if (obj.orders)   pills.push('<div class="bkp-stat-pill"><div class="sp-num">'+obj.orders.length+'</div><div class="sp-lbl">📋 طلب</div></div>');
+          if (obj.settings) pills.push('<div class="bkp-stat-pill"><div class="sp-num">✓</div><div class="sp-lbl">⚙️ إعدادات</div></div>');
+          if (obj.staff)    pills.push('<div class="bkp-stat-pill"><div class="sp-num">'+obj.staff.length+'</div><div class="sp-lbl">👥 موظف</div></div>');
+          if (obj.suppliers)pills.push('<div class="bkp-stat-pill"><div class="sp-num">'+obj.suppliers.length+'</div><div class="sp-lbl">🏪 مورّد</div></div>');
+          statsEl.innerHTML = pills.join('');
+        }
+        var wrap = document.getElementById('bkp-preview-wrap');
+        if (wrap) { wrap.style.display='block'; wrap.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+        bkpStatus('✅ تم قراءة الملف بنجاح — راجع الخيارات ثم اضغط استرجاع', 'ok');
+      } catch(err) {
+        bkpStatus('❌ الملف تالف أو غير متوافق: ' + err.message, 'err');
+      }
+    };
+    r.readAsText(f);
+  };
+
+  // ── Restore ──
+  window.backupRestore = async function() {
+    var obj = window._bkpLoaded;
+    if (!obj) { bkpStatus('❌ لا يوجد ملف محمّل', 'err'); return; }
+    var restProds = document.getElementById('bkp-restore-products')?.checked;
+    var restSets  = document.getElementById('bkp-restore-settings')?.checked;
+    var restOrds  = document.getElementById('bkp-restore-orders')?.checked;
+
+    if (!restProds && !restSets && !restOrds) { bkpStatus('⚠️ اختر شيئاً لاسترجاعه', 'err'); return; }
+
+    var msg = 'تأكيد الاسترجاع:
+';
+    if (restProds && obj.products) msg += '• ' + obj.products.length + ' منتج (سيُضاف/يُحدَّث)
+';
+    if (restSets  && obj.settings) msg += '• الإعدادات
+';
+    if (restOrds  && obj.orders)   msg += '• ' + obj.orders.length + ' طلب (ستحل محل الموجودة)
+';
+    if (!confirm(msg + '
+هل أنت متأكد؟')) return;
+
+    bkpStatus('⏳ جارٍ الاسترجاع...', 'info');
+    var btn = document.getElementById('bkp-restore-btn');
+    if (btn) { btn.textContent = '⏳ جارٍ...'; btn.disabled = true; }
+
+    var errors = 0, done = 0;
+
+    try {
+      // Restore products — upsert each
+      if (restProds && obj.products && obj.products.length) {
+        for (var i = 0; i < obj.products.length; i++) {
+          var p = Object.assign({}, obj.products[i]);
+          delete p.id; // let Supabase handle id or update by name
+          try {
+            await sbPost('products', p);
+            done++;
+          } catch(e) {
+            // try patch if exists (by sku match)
+            errors++;
+          }
+        }
+        // refresh local
+        try {
+          var fresh = await sbGet('products', 'order=created_at.desc&select=*');
+          window.PRODUCTS = fresh;
+          window._ptPRODUCTS = fresh;
+          saveLocal('products', fresh);
+          if (window.renderProds) renderProds(window.curFilter || 'all');
+          if (window.renderCats) renderCats();
+        } catch(e2) {}
+      }
+
+      // Restore settings
+      if (restSets && obj.settings && obj.settings.id) {
+        try {
+          var sid = obj.settings.id;
+          var su = Object.assign({}, obj.settings); delete su.id; delete su.created_at;
+          await sbPatch('settings', sid, su);
+          Object.assign(window.SETTINGS, su);
+          saveLocal('settings', window.SETTINGS);
+          if (window.applySettings) applySettings();
+          done++;
+        } catch(e) { errors++; }
+      }
+
+      // Restore orders (dangerous — warning given)
+      if (restOrds && obj.orders && obj.orders.length) {
+        for (var j = 0; j < obj.orders.length; j++) {
+          try {
+            var od = Object.assign({}, obj.orders[j]); delete od.id;
+            await sbPost('orders', od);
+            done++;
+          } catch(e) { errors++; }
+        }
+      }
+
+      if (errors === 0) {
+        bkpStatus('✅ تم الاسترجاع بنجاح — ' + done + ' سجل', 'ok');
+        if (window.toast) toast('✅ تم الاسترجاع بنجاح!');
+      } else {
+        bkpStatus('⚠️ اكتمل مع ' + errors + ' خطأ و' + done + ' نجاح — راجع console', 'info');
+      }
+      document.getElementById('bkp-preview-wrap').style.display = 'none';
+      window._bkpLoaded = null;
+    } catch(e) {
+      bkpStatus('❌ خطأ في الاسترجاع: ' + (e.message||e), 'err');
+    } finally {
+      if (btn) { btn.textContent = '🔄 استرجاع الآن'; btn.disabled = false; }
+    }
+  };
+
+  // ── Render history list ──
+  function renderBackupHistory() {
+    var el = document.getElementById('bkp-history-list');
+    if (!el) return;
+    var hist = loadHistory();
+    if (!hist.length) {
+      el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:.82rem">لا توجد نسخ محفوظة بعد<br><span style="font-size:.72rem;opacity:.7">اضغط «حفظ الآن» لأول نسخة</span></div>';
+      return;
+    }
+    el.innerHTML = hist.map(function(h, idx) {
+      var modeLabel = h.mode === 'full' ? '🌹 كاملة' : h.mode === 'products' ? '📦 منتجات' : '📋 طلبات';
+      var detail = [];
+      if (h.count.products) detail.push(h.count.products + ' منتج');
+      if (h.count.orders)   detail.push(h.count.orders + ' طلب');
+      return '<div class="bkp-hist-row">' +
+        '<div class="hr-icon">💾</div>' +
+        '<div class="hr-info">' +
+          '<div class="hr-date">' + h.label + ' — ' + modeLabel + '</div>' +
+          '<div class="hr-meta">' + detail.join(' · ') + '</div>' +
+        '</div>' +
+        '<div class="hr-actions">' +
+          '<button class="hr-dl" onclick="backupDownloadHistory('+idx+')">⬇ تحميل</button>' +
+          '<button class="hr-del" onclick="backupDeleteHistory('+idx+')">🗑</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  window.backupDownloadHistory = function(idx) {
+    var hist = loadHistory();
+    var h = hist[idx]; if (!h || !h.data) return;
+    var json = JSON.stringify(h.data, null, 2);
+    var fname = 'OR6-local-backup-' + new Date(h.ts).toISOString().slice(0,10) + '.json';
+    var blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a'); a.href=url; a.download=fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    if (window.toast) toast('⬇ تم تحميل النسخة المحلية');
+  };
+
+  window.backupDeleteHistory = function(idx) {
+    if (!confirm('حذف هذه النسخة المحلية؟')) return;
+    var hist = loadHistory();
+    hist.splice(idx, 1);
+    saveHistory(hist);
+    renderBackupHistory();
+    if (window.toast) toast('🗑 تم الحذف');
+  };
+
+  // ── Drag-and-drop on drop zone ──
+  window.initBackupPanel = function() {
+    renderBackupHistory();
+    var zone = document.getElementById('bkp-drop-zone');
+    if (!zone || zone._zoneReady) return;
+    zone._zoneReady = true;
+    zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('drag-over'); }, false);
+    zone.addEventListener('dragleave', function(){ zone.classList.remove('drag-over'); }, false);
+    zone.addEventListener('drop', function(e){
+      e.preventDefault(); zone.classList.remove('drag-over');
+      var f = e.dataTransfer.files[0];
+      if (!f) return;
+      // Simulate file input
+      var dt = new DataTransfer(); dt.items.add(f);
+      var inp = document.getElementById('bkp-file-input');
+      inp.files = dt.files;
+      backupReadFile(inp);
+    }, false);
+  };
+
+})();
+</script>
+
 </body>
 </html>
